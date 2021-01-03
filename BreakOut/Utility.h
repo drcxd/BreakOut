@@ -4,5 +4,6 @@ class Utility {
 public:
 
     static void CheckGLError();
+
 };
 #endif

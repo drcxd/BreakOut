@@ -2,9 +2,9 @@
 #define __SHADER_H__
 
 #include <string>
+#include <memory>
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -38,7 +38,7 @@ public:
     void setVec3(const std::string& name,
                  float x, float y, float z) const;
     void setTexture(const std::string& name, int value,
-                    const Texture2D& tex);
+                    const std::shared_ptr<Texture2D>& tex);
 };
 
 #endif

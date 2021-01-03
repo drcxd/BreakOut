@@ -3,8 +3,6 @@
 #include <sstream>
 #include <cassert>
 
-#include <glad/glad.h>
-
 #include <fmt/core.h>
 
 #include "Texture2D.h"
@@ -105,7 +103,8 @@ void Shader::setVec3( const std::string& name, float x, float y, float z) const 
 }
 
 void Shader::setTexture(const std::string& name, int value,
-                        const Texture2D& tex) {
+                        const std::shared_ptr<Texture2D>& tex) {
     glActiveTexture(GL_TEXTURE0 + value);
-    glBindTexture(GL_TEXTURE_2D, tex.ID);
+    glBindTexture(GL_TEXTURE_2D, tex->ID);
+    setInt(name, value);
 }

@@ -6,6 +6,10 @@
 
 #include <fmt/core.h>
 #include "stb_image.h"
+#include <glad/glad.h>
+
+#include "Shader.h"
+#include "Texture2D.h"
 
 static std::string LoadShaderCode(const char* file);
 
@@ -27,11 +31,11 @@ ResourceManager* ResourceManager::GetInstance() {
     return singleton;
 }
 
-std::shared_ptr<Shader>
+const std::shared_ptr<Shader>&
 ResourceManager::LoadShader(const std::string& name,
-                                    const char* vert,
-                                    const char* frag,
-                                    const char* geom) {
+                            const char* vert,
+                            const char* frag,
+                            const char* geom) {
     std::string vertCode = LoadShaderCode(vert);
     std::string fragCode = LoadShaderCode(frag);
     std::string geomCode = geom ? LoadShaderCode(geom) : std::string();
@@ -40,6 +44,7 @@ ResourceManager::LoadShader(const std::string& name,
     ShaderSource geomS = { geom, geomCode.c_str() };
 
     if (vertCode.empty() || fragCode.empty()) {
+        fmt::print("Can not load {} or {}\n", vert, frag);
         return nullptr;
     }
 
@@ -52,9 +57,10 @@ ResourceManager::LoadShader(const std::string& name,
     return shaders[name];
 }
 
-std::shared_ptr<Texture2D>
+const std::shared_ptr<Texture2D>&
 ResourceManager::
-LoadTexture2D(const char* path, bool gammaCorrection) {
+LoadTexture2D(const char* path, const std::string& name,
+              bool gammaCorrection) {
     int width, height, channels;
     void *data = stbi_load(path, &width, &height, &channels, 0);
 
@@ -100,10 +106,10 @@ LoadTexture2D(const char* path, bool gammaCorrection) {
         params
     };
 
-    textures.emplace(std::string(path),
+    textures.emplace(name,
                      std::make_shared<Texture2D>(&ts));
 
-    return textures[std::string(path)];
+    return textures[name];
 }
 
 std::string LoadShaderCode(const char* file) {
@@ -119,4 +125,20 @@ std::string LoadShaderCode(const char* file) {
     fstream.close();
 
     return content.str();
+}
+
+const std::shared_ptr<Shader>&
+ResourceManager::GetShader(const std::string& name) {
+    if (shaders.find(name) == shaders.end()) {
+        return nullptr;
+    }
+    return shaders[name];
+}
+
+const std::shared_ptr<Texture2D>&
+ResourceManager::GetTexture2D(const std::string& name) {
+    if (textures.find(name) == textures.end()) {
+        return nullptr;
+    }
+    return textures[name];
 }
