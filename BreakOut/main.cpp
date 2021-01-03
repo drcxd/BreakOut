@@ -51,7 +51,7 @@ int main() {
     float lastFrame = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
-        float currentFrame = glfwGetTime();
+        float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         glfwPollEvents();
@@ -78,8 +78,7 @@ void framebuffer_size_callback(GLFWwindow *window,
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode,
-                  int action, int mode)
-{
+                  int action, int mode) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }

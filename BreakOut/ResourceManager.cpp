@@ -31,7 +31,7 @@ ResourceManager* ResourceManager::GetInstance() {
     return singleton;
 }
 
-const std::shared_ptr<Shader>&
+std::shared_ptr<Shader>
 ResourceManager::LoadShader(const std::string& name,
                             const char* vert,
                             const char* frag,
@@ -57,7 +57,7 @@ ResourceManager::LoadShader(const std::string& name,
     return shaders[name];
 }
 
-const std::shared_ptr<Texture2D>&
+std::shared_ptr<Texture2D>
 ResourceManager::
 LoadTexture2D(const char* path, const std::string& name,
               bool gammaCorrection) {
@@ -127,7 +127,7 @@ std::string LoadShaderCode(const char* file) {
     return content.str();
 }
 
-const std::shared_ptr<Shader>&
+std::shared_ptr<Shader>
 ResourceManager::GetShader(const std::string& name) {
     if (shaders.find(name) == shaders.end()) {
         return nullptr;
@@ -135,7 +135,7 @@ ResourceManager::GetShader(const std::string& name) {
     return shaders[name];
 }
 
-const std::shared_ptr<Texture2D>&
+std::shared_ptr<Texture2D>
 ResourceManager::GetTexture2D(const std::string& name) {
     if (textures.find(name) == textures.end()) {
         return nullptr;

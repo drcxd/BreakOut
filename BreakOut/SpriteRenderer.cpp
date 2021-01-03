@@ -3,7 +3,7 @@
 #include "Shader.h"
 #include "Utility.h"
 
-SpriteRenderer::SpriteRenderer(std::shared_ptr<Shader> shader)
+SpriteRenderer::SpriteRenderer(const std::shared_ptr<Shader>& shader)
     : shader(shader)
     , quadVAO(0) {
     InitRenderData();
@@ -37,7 +37,6 @@ void SpriteRenderer::InitRenderData() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-
 
 void SpriteRenderer::Draw(const std::shared_ptr<Texture2D>& texture,
                           glm::vec2 position, glm::vec2 size,

@@ -13,15 +13,19 @@ public:
 
     ~ResourceManager();
     static ResourceManager* GetInstance();
-    const std::shared_ptr<Shader>&
+
+    std::shared_ptr<Shader>
     LoadShader(const std::string& name, const char* vert,
                const char* frag, const char* geom = nullptr);
-    const std::shared_ptr<Texture2D>&
+
+    std::shared_ptr<Texture2D>
     LoadTexture2D(const char* path, const std::string& name,
                   bool gammaCorrection = false);
-    const std::shared_ptr<Shader>&
+
+    std::shared_ptr<Shader>
     GetShader(const std::string& name);
-    const std::shared_ptr<Texture2D>&
+
+    std::shared_ptr<Texture2D>
     GetTexture2D(const std::string& name);
 
 private:

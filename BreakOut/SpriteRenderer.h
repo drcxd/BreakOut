@@ -12,7 +12,7 @@ class Texture2D;
 class SpriteRenderer {
 public:
 
-    SpriteRenderer(std::shared_ptr<Shader> shader);
+    SpriteRenderer(const std::shared_ptr<Shader>& shader);
     ~SpriteRenderer();
 
     void Draw(
