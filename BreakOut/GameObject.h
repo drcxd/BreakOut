@@ -2,6 +2,7 @@
 #define __GAMEOBJECT_H__
 
 #include <memory>
+#include <unordered_set>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -25,9 +26,11 @@ public:
     GameObject(const GameObjectAttribute& attribute);
     virtual ~GameObject();
 
-    void Update(float dt);
-    void Draw(const SpriteRenderer& renderer);
+    virtual void Update(float dt);
+    virtual void Draw(const SpriteRenderer& renderer);
 
     GameObjectAttribute attribute;
+
+    std::unordered_set<std::shared_ptr<GameObject>> children;
 };
 #endif

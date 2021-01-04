@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Ball.cpp" />
     <ClCompile Include="format.cc" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameLevel.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ball.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameLevel.h" />
     <ClInclude Include="GameObject.h" />

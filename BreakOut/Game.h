@@ -24,8 +24,6 @@ public:
     GameState state;
     bool keys[1024];
     int width, height;
-    bool quit;
-
 
 private:
 
