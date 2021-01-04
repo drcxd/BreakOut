@@ -2,7 +2,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <gl/GL.h>
 
 #include <fmt/core.h>
 
@@ -34,6 +33,7 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetKeyCallback(window, key_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD!\n";
@@ -82,6 +82,7 @@ void key_callback(GLFWwindow* window, int key, int scancode,
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
+
     if (key >= 0 && key < 1024) {
         if (action == GLFW_PRESS) {
             game.keys[key] = true;
@@ -90,4 +91,3 @@ void key_callback(GLFWwindow* window, int key, int scancode,
         }
     }
 }
-

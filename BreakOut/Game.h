@@ -1,6 +1,11 @@
 #ifndef __GAME_H__
 #define __GAME_H__
 
+#include <vector>
+#include <memory>
+
+class GameLevel;
+
 enum class GameState {
     GAME_ACTIVE,
     GAME_MENU,
@@ -20,6 +25,12 @@ public:
     bool keys[1024];
     int width, height;
     bool quit;
+
+
+private:
+
+    std::vector<std::shared_ptr<GameLevel>> levels;
+    void loadResources();
 };
 
 #endif

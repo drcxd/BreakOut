@@ -5,14 +5,17 @@
 
 SpriteRenderer::SpriteRenderer(const std::shared_ptr<Shader>& shader)
     : shader(shader)
-    , quadVAO(0) {
+    , quadVAO(0)
+    , quadVBO(0) {
     InitRenderData();
 }
 
-SpriteRenderer::~SpriteRenderer() { }
+SpriteRenderer::~SpriteRenderer() {
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &quadVBO);
+}
 
 void SpriteRenderer::InitRenderData() {
-    GLuint VBO;
     float vertices[] = {
         0.0f, 1.0f, 0.0f, 1.0f,
         1.0f, 0.0f, 1.0f, 0.0f,
@@ -24,9 +27,9 @@ void SpriteRenderer::InitRenderData() {
     };
 
     glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &quadVBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
                  GL_STATIC_DRAW);
 
@@ -40,7 +43,7 @@ void SpriteRenderer::InitRenderData() {
 
 void SpriteRenderer::Draw(const std::shared_ptr<Texture2D>& texture,
                           glm::vec2 position, glm::vec2 size,
-                          float rotate, glm::vec3 color) {
+                          float rotate, glm::vec3 color) const {
     shader->use();
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(position, 0.0f));

@@ -62,7 +62,8 @@ ResourceManager::
 LoadTexture2D(const char* path, const std::string& name,
               bool gammaCorrection) {
     int width, height, channels;
-    void *data = stbi_load(path, &width, &height, &channels, 0);
+    unsigned char *data =
+        stbi_load(path, &width, &height, &channels, 0);
 
     if (!data) {
         fmt::print("Failed to load texture {}!\n", path);
@@ -86,6 +87,7 @@ LoadTexture2D(const char* path, const std::string& name,
         break;
     }
     default: {
+        fmt::print("Texture {} has {} channels!\n", path, channels);
         assert(false);
         break;
     }
