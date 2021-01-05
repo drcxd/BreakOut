@@ -56,7 +56,8 @@ void GameLevel::Draw(const SpriteRenderer& renderer) const {
 
 bool GameLevel::IsComplete() const {
     for (const auto& brick : bricks) {
-        if (!brick->attribute.isDestroyed) {
+        if (!brick->attribute.isDestroyed &&
+            !brick->attribute.isSolid) {
             return false;
         }
     }
