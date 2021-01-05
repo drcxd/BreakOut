@@ -108,3 +108,15 @@ void Shader::setTexture(const std::string& name, int value,
     glBindTexture(GL_TEXTURE_2D, tex->ID);
     setInt(name, value);
 }
+
+void Shader::setVec2(const std::string& name,
+                     const glm::vec2& value) const {
+    glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1,
+                 glm::value_ptr(value));
+}
+
+void Shader::setVec4(const std::string& name,
+                     const glm::vec4& value) const {
+    glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1,
+                 glm::value_ptr(value));
+}

@@ -16,10 +16,12 @@
 #include "GameLevel.h"
 #include "GameObject.h"
 #include "Ball.h"
+#include "Particle.h"
 
 SpriteRenderer* renderer;
 std::shared_ptr<GameObject> player;
 std::shared_ptr<Ball> ball;
+std::shared_ptr<ParticleGenerator> particles;
 
 const glm::vec2 BALL_VELOCITY = glm::vec2(200.0f, -200.0f);
 
@@ -86,6 +88,12 @@ void Game::Init() {
 
     player->children.insert(ball);
     objects.insert(player);
+
+    particles = std::make_shared<ParticleGenerator>(
+            500,
+            ResourceManager::GetInstance()->GetShader("particle"),
+            ResourceManager::GetInstance()->GetTexture2D("particle")
+        );
 }
 
 void Game::ProcessInput(float dt) {
@@ -111,6 +119,9 @@ void Game::Update(float dt) {
         object->Update(dt);
     }
     doCollision();
+
+    particles->Update(dt, ball, 2,
+                      glm::vec2(ball->ballAttribute.radius / 2.0f));
 }
 
 void Game::Render() {
@@ -124,6 +135,7 @@ void Game::Render() {
     levels[0]->Draw(*renderer);
 
     player->Draw(*renderer);
+    particles->Draw();
     ball->Draw(*renderer);
 }
 
@@ -137,6 +149,15 @@ void Game::loadResources() {
     spriteShader->use();
     spriteShader->setMat4("projection", projection);
 
+    auto particleShader = ResourceManager::GetInstance()->
+        LoadShader("particle", "./shaders/particle.vert",
+                   "./shaders/particle.frag");
+    particleShader->use();
+    particleShader->setMat4("projection", projection);
+
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/particle.png",
+                      "particle", false);
     ResourceManager::GetInstance()->
         LoadTexture2D("./resources/textures/awesomeface.png", "face",
                       true);

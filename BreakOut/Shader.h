@@ -5,7 +5,6 @@
 #include <memory>
 
 #include <glad/glad.h>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 class Texture2D;
@@ -37,6 +36,10 @@ public:
                  const glm::vec3& value) const;
     void setVec3(const std::string& name,
                  float x, float y, float z) const;
+    void setVec2(const std::string& name,
+                 const glm::vec2& value) const;
+    void setVec4(const std::string& name,
+                 const glm::vec4& value) const;
     void setTexture(const std::string& name, int value,
                     const std::shared_ptr<Texture2D>& tex);
 };
