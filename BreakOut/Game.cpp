@@ -63,18 +63,18 @@ void Game::Init() {
     ballAttr.radius = 10.0f;
     ballAttr.isStatic = true;
 
-    attr.size = glm::vec2(2 * ballAttr.radius);
-    attr.position = player->attribute.position +
-        glm::vec2(player->attribute.size.x / 2 - ballAttr.radius,
+    ballAttr.size = glm::vec2(2 * ballAttr.radius);
+    ballAttr.position = player->Attr()->position +
+        glm::vec2(player->Attr()->size.x / 2 - ballAttr.radius,
                   -2 * ballAttr.radius - 1.0f);
-    attr.velocity = BALL_VELOCITY;
-    attr.color = glm::vec3(1.0f);
-    attr.rotation = 0.0f;
-    attr.isSolid = true;
-    attr.isDestroyed = false;
-    attr.texture = ResourceManager::GetInstance()->
+    ballAttr.velocity = BALL_VELOCITY;
+    ballAttr.color = glm::vec3(1.0f);
+    ballAttr.rotation = 0.0f;
+    ballAttr.isSolid = true;
+    ballAttr.isDestroyed = false;
+    ballAttr.texture = ResourceManager::GetInstance()->
         GetTexture2D("face");
-    ball = std::make_shared<Ball>(ballAttr, attr);
+    ball = std::make_shared<Ball>(ballAttr);
 
     // Boundary
     attr.size = glm::vec2(width, 1.0f);
@@ -105,7 +105,7 @@ void Game::Init() {
 }
 
 void Game::ProcessInput(float dt) {
-    auto& playerAttr = player->attribute;
+    auto& playerAttr = *player->Attr();
     if (keys[GLFW_KEY_A] && keys[GLFW_KEY_D] ||
         !keys[GLFW_KEY_A] && !keys[GLFW_KEY_D]) {
         playerAttr.velocity.x = 0.0f;
@@ -115,8 +115,8 @@ void Game::ProcessInput(float dt) {
         playerAttr.velocity.x = 500.0f;
     }
 
-    if (keys[GLFW_KEY_SPACE] && ball->ballAttribute.isStatic) {
-        ball->ballAttribute.isStatic = false;
+    if (keys[GLFW_KEY_SPACE] && ball->Attr()->isStatic) {
+        ball->Attr()->isStatic = false;
         player->children.erase(ball);
         objects.insert(ball);
     }
@@ -129,7 +129,7 @@ void Game::Update(float dt) {
     doCollision();
 
     particles->Update(dt, ball, 2,
-                      glm::vec2(ball->ballAttribute.radius / 2.0f));
+                      glm::vec2(ball->Attr()->radius / 2.0f));
 
     if (shakeTime > 0.0f) {
         shakeTime -= dt;
@@ -202,9 +202,9 @@ void Game::loadResources() {
 void Game::doCollision() {
     for (auto& brick : levels[0]->bricks) {
         auto info = checkCollision(ball, brick);
-        if (!brick->attribute.isDestroyed && info.isCollided) {
-            if (!brick->attribute.isSolid) {
-                brick->attribute.isDestroyed = true;
+        if (!brick->Attr()->isDestroyed && info.isCollided) {
+            if (!brick->Attr()->isSolid) {
+                brick->Attr()->isDestroyed = true;
             } else {
                 shakeTime = 0.05f;
                 effects->shake = true;
@@ -222,28 +222,28 @@ void Game::doCollision() {
 
     auto info = checkCollision(ball, player);
     if (info.isCollided) {
-        float playerCenter = player->attribute.position.x +
-            player->attribute.size.x / 2.0f;
-        float dist = ball->attribute.position.x +
-            ball->ballAttribute.radius - playerCenter;
-        float percent = dist / (player->attribute.size.x / 2.0f);
-        glm::vec2 oldVelocity = ball->attribute.velocity;
-        ball->attribute.velocity.x = BALL_VELOCITY.x * percent * 2.0f;
-        ball->attribute.velocity =
-            glm::normalize(ball->attribute.velocity) *
+        float playerCenter = player->Attr()->position.x +
+            player->Attr()->size.x / 2.0f;
+        float dist = ball->Attr()->position.x +
+            ball->Attr()->radius - playerCenter;
+        float percent = dist / (player->Attr()->size.x / 2.0f);
+        glm::vec2 oldVelocity = ball->Attr()->velocity;
+        ball->Attr()->velocity.x = BALL_VELOCITY.x * percent * 2.0f;
+        ball->Attr()->velocity =
+            glm::normalize(ball->Attr()->velocity) *
             glm::length(BALL_VELOCITY);
-        ball->attribute.velocity.y = -1.0f *
-            std::fabs(ball->attribute.velocity.y);
+        ball->Attr()->velocity.y = -1.0f *
+            std::fabs(ball->Attr()->velocity.y);
     }
 }
 
 CollisionInfo
 Game::checkCollision(std::shared_ptr<Ball>& ball,
                      std::shared_ptr<GameObject>& brick) {
-    glm::vec2 ballCenter = ball->attribute.position +
-        glm::vec2(ball->ballAttribute.radius);
-    glm::vec2 halfSize = brick->attribute.size * 0.5f;
-    glm::vec2 brickCenter = brick->attribute.position + halfSize;
+    glm::vec2 ballCenter = ball->Attr()->position +
+        glm::vec2(ball->Attr()->radius);
+    glm::vec2 halfSize = brick->Attr()->size * 0.5f;
+    glm::vec2 brickCenter = brick->Attr()->position + halfSize;
     glm::vec2 dist = ballCenter - brickCenter;
     glm::vec2 closest = glm::clamp(dist, -halfSize, halfSize) +
         brickCenter;
@@ -251,7 +251,7 @@ Game::checkCollision(std::shared_ptr<Ball>& ball,
     dist = closest - ballCenter;
 
     CollisionInfo info;
-    info.isCollided = glm::length(dist) < ball->ballAttribute.radius;
+    info.isCollided = glm::length(dist) < ball->Attr()->radius;
     info.direction= info.isCollided ?
         calculateCollisionDirection(dist) :
         glm::vec2(1.0f);
@@ -284,16 +284,16 @@ void Game::applyCollision(std::shared_ptr<Ball>& ball,
                           const CollisionInfo& info) {
     if (info.direction == glm::vec2(1.0f, 0.0f) ||
         info.direction == glm::vec2(-1.0f, 0.0f)) {
-        ball->attribute.velocity.x *= -1.0f;
-        float penetration = ball->ballAttribute.radius -
+        ball->Attr()->velocity.x *= -1.0f;
+        float penetration = ball->Attr()->radius -
             std::fabs(info.displace.x);
-        ball->attribute.position += info.direction.x == 1.0f ?
+        ball->Attr()->position += info.direction.x == 1.0f ?
             -penetration : +penetration;
     } else {
-        ball->attribute.velocity.y *= -1.0f;
-        float penetration = ball->ballAttribute.radius -
+        ball->Attr()->velocity.y *= -1.0f;
+        float penetration = ball->Attr()->radius -
             std::fabs(info.displace.y);
-        ball->attribute.position += info.direction.y == 1.0f ?
+        ball->Attr()->position += info.direction.y == 1.0f ?
             -penetration : penetration;
     }
 }

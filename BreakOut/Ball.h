@@ -3,20 +3,25 @@
 
 #include "GameObject.h"
 
-struct BallAttribute {
-    float radius;
-    bool isStatic;
+struct BallAttribute : public GameObjectAttribute {
+    float radius = 0.0f;
+    bool isStatic = true;
+
+    BallAttribute() { }
+    BallAttribute(const GameObjectAttribute& objAttr)
+        : GameObjectAttribute(objAttr) { }
+    BallAttribute(float radius, bool isStatic)
+        : radius(radius), isStatic(isStatic) { }
 };
 
 class Ball : public GameObject {
 public:
 
-    Ball(const BallAttribute& ballAttr,
-         const GameObjectAttribute& attr);
+    Ball(const BallAttribute& ballAttr);
     ~Ball();
 
     void Update(float dt) override;
-
-    BallAttribute ballAttribute;
+    BallAttribute* Attr() override;
+    const BallAttribute* Attr() const override;
 };
 #endif

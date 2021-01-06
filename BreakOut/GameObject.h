@@ -23,14 +23,21 @@ struct GameObjectAttribute {
 class GameObject {
 public:
 
-    GameObject(const GameObjectAttribute& attribute);
+    GameObject(const GameObjectAttribute& objAttr);
+    GameObject(std::unique_ptr<GameObjectAttribute>&& ptr)
+        : attr(std::move(ptr)) { }
     virtual ~GameObject();
 
     virtual void Update(float dt);
     virtual void Draw(const SpriteRenderer& renderer);
 
-    GameObjectAttribute attribute;
+    virtual GameObjectAttribute* Attr();
+    virtual const GameObjectAttribute* Attr() const;
 
     std::unordered_set<std::shared_ptr<GameObject>> children;
+
+protected:
+
+    std::unique_ptr<GameObjectAttribute> attr;
 };
 #endif

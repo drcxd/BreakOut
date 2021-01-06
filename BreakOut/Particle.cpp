@@ -92,11 +92,11 @@ void ParticleGenerator::respawnParticle(
     const glm::vec2& offset) {
     float random = ((rand() % 100) - 50) / 10.0f;
     float color = 0.5f + ((rand() % 100) / 100.0f);
-    p.position = object->attribute.position +
+    p.position = object->Attr()->position +
         glm::vec2(random) + offset;
     p.color = glm::vec4(glm::vec3(color), 1.0f);
     p.life = 1.0f;
-    p.velocity = object->attribute.velocity * 0.1f;
+    p.velocity = object->Attr()->velocity * 0.1f;
 }
 
 void ParticleGenerator::init() {
