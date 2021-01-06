@@ -10,6 +10,7 @@
 class GameLevel;
 class Ball;
 class GameObject;
+class PowerUp;
 
 enum class GameState {
     GAME_ACTIVE,
@@ -38,14 +39,28 @@ public:
 
 private:
 
+    // Objects
     std::vector<std::shared_ptr<GameObject>> boundary;
     std::vector<std::shared_ptr<GameLevel>> levels;
+    std::unordered_set<std::shared_ptr<GameObject>> objects;
+    std::vector<std::shared_ptr<PowerUp>> powerUps;
+
+    // PowerUp
+    bool shouldSpawn(int chance) const;
+    void spawnPowerUps(const std::shared_ptr<GameObject>& brick);
+    void updatePowerUps(float dt);
+    void activatePowerUp(const std::shared_ptr<PowerUp>& p);
+    bool otherActivePowerUp(const std::string& type);
+
+    // Resources
     void loadResources();
 
+    // Collision
     void doCollision();
+    bool checkCollision(const std::shared_ptr<GameObject>& obj1,
+                        const std::shared_ptr<GameObject>& obj2) const;
     CollisionInfo checkCollision(std::shared_ptr<Ball>& ball,
                                  std::shared_ptr<GameObject>& brick);
-    std::unordered_set<std::shared_ptr<GameObject>> objects;
     glm::vec2 calculateCollisionDirection(const glm::vec2& dir);
     void applyCollision(std::shared_ptr<Ball>& ball,
                         const CollisionInfo& info);

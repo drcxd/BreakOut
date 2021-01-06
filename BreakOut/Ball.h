@@ -6,6 +6,8 @@
 struct BallAttribute : public GameObjectAttribute {
     float radius = 0.0f;
     bool isStatic = true;
+    bool isSticky = false;
+    bool isPassThrough = false;
 
     BallAttribute() { }
     BallAttribute(const GameObjectAttribute& objAttr)

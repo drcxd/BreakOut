@@ -14,9 +14,9 @@ struct GameObjectAttribute {
     glm::vec2 position;
     glm::vec2 velocity;
     glm::vec3 color;
-    float rotation;
-    bool isSolid;
-    bool isDestroyed;
+    float rotation = 0.0f;
+    bool isSolid = true;
+    bool isDestroyed = false;
     std::shared_ptr<Texture2D> texture;
 };
 

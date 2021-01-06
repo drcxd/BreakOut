@@ -3,11 +3,13 @@
 #include <memory>
 #include <cmath>
 #include <cassert>
+#include <algorithm>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <fmt/core.h>
 
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
@@ -18,6 +20,7 @@
 #include "Ball.h"
 #include "Particle.h"
 #include "PostProcessor.h"
+#include "PowerUp.h"
 
 PostProcessor* effects;
 SpriteRenderer* renderer;
@@ -131,6 +134,8 @@ void Game::Update(float dt) {
     particles->Update(dt, ball, 2,
                       glm::vec2(ball->Attr()->radius / 2.0f));
 
+    updatePowerUps(dt);
+
     if (shakeTime > 0.0f) {
         shakeTime -= dt;
         if (shakeTime <= 0.0f) {
@@ -149,6 +154,11 @@ void Game::Render() {
                    glm::vec3(1.0f, 1.0f, 1.0f));
 
     levels[0]->Draw(*renderer);
+    for (auto& p : powerUps) {
+        if (!p->Attr()->isDestroyed) {
+            p->Draw(*renderer);
+        }
+    }
 
     player->Draw(*renderer);
     particles->Draw();
@@ -193,6 +203,24 @@ void Game::loadResources() {
                       "brick_solid");
     ResourceManager::GetInstance()->
         LoadTexture2D("./resources/textures/paddle.png", "paddle");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_chaos.png",
+                      "chaos");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_confuse.png",
+                      "confuse");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_increase.png",
+                      "pad-size-increase");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_passthrough.png",
+                      "pass-through");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_speed.png",
+                      "speed");
+    ResourceManager::GetInstance()->
+        LoadTexture2D("./resources/textures/powerup_sticky.png",
+                      "sticky");
 
     levels.emplace_back(std::make_shared<GameLevel>());
     levels[0]->Load("./resources/levels/one.lvl",
@@ -200,19 +228,25 @@ void Game::loadResources() {
 }
 
 void Game::doCollision() {
+    // Ball VS Bricks
     for (auto& brick : levels[0]->bricks) {
         auto info = checkCollision(ball, brick);
         if (!brick->Attr()->isDestroyed && info.isCollided) {
             if (!brick->Attr()->isSolid) {
                 brick->Attr()->isDestroyed = true;
+                spawnPowerUps(brick);
+                if (!ball->Attr()->isPassThrough) {
+                    applyCollision(ball, info);
+                }
             } else {
                 shakeTime = 0.05f;
                 effects->shake = true;
+                applyCollision(ball, info);
             }
-            applyCollision(ball, info);
         }
     }
 
+    // Ball VS Boundary
     for (auto& bound : boundary) {
         auto info = checkCollision(ball, bound);
         if (info.isCollided) {
@@ -220,21 +254,60 @@ void Game::doCollision() {
         }
     }
 
+    // Ball VS Player
     auto info = checkCollision(ball, player);
-    if (info.isCollided) {
+    if (!ball->Attr()->isStatic && info.isCollided) {
         float playerCenter = player->Attr()->position.x +
             player->Attr()->size.x / 2.0f;
         float dist = ball->Attr()->position.x +
             ball->Attr()->radius - playerCenter;
         float percent = dist / (player->Attr()->size.x / 2.0f);
+        percent = glm::clamp(percent, -1.0f, 1.0f);
         glm::vec2 oldVelocity = ball->Attr()->velocity;
         ball->Attr()->velocity.x = BALL_VELOCITY.x * percent * 2.0f;
         ball->Attr()->velocity =
             glm::normalize(ball->Attr()->velocity) *
-            glm::length(BALL_VELOCITY);
+            glm::length(oldVelocity);
         ball->Attr()->velocity.y = -1.0f *
             std::fabs(ball->Attr()->velocity.y);
+        if (ball->Attr()->isSticky) {
+            objects.erase(ball);
+            player->children.insert(ball);
+            ball->Attr()->isStatic = true;
+        }
     }
+
+    // Power up VS Player
+    for (auto &p : powerUps) {
+        if (p->Attr()->isDestroyed) {
+            continue;
+        }
+        if (p->Attr()->position.y >= height) {
+            p->Attr()->isDestroyed = true;
+            continue;
+        }
+        if (checkCollision(player, p)) {
+            activatePowerUp(p);
+            p->Attr()->isDestroyed = true;
+            p->Attr()->isActive = true;
+        }
+    }
+}
+
+bool Game::checkCollision(
+    const std::shared_ptr<GameObject>& obj1,
+    const std::shared_ptr<GameObject>& obj2) const {
+    bool collisionX =
+        obj1->Attr()->position.x + obj1->Attr()->size.x >=
+        obj2->Attr()->position.x &&
+        obj2->Attr()->position.x + obj2->Attr()->size.x >=
+        obj1->Attr()->position.x;
+    bool collisionY =
+        obj1->Attr()->position.y + obj1->Attr()->size.y >=
+        obj2->Attr()->position.y &&
+        obj2->Attr()->position.y + obj2->Attr()->size.y >=
+        obj1->Attr()->position.y;
+    return collisionX && collisionY;
 }
 
 CollisionInfo
@@ -287,13 +360,143 @@ void Game::applyCollision(std::shared_ptr<Ball>& ball,
         ball->Attr()->velocity.x *= -1.0f;
         float penetration = ball->Attr()->radius -
             std::fabs(info.displace.x);
-        ball->Attr()->position += info.direction.x == 1.0f ?
+        ball->Attr()->position.x += info.direction.x == 1.0f ?
             -penetration : +penetration;
     } else {
         ball->Attr()->velocity.y *= -1.0f;
         float penetration = ball->Attr()->radius -
             std::fabs(info.displace.y);
-        ball->Attr()->position += info.direction.y == 1.0f ?
+        ball->Attr()->position.y += info.direction.y == 1.0f ?
             -penetration : penetration;
     }
+}
+
+bool Game::shouldSpawn(int chance) const {
+    int random = rand() % chance;
+    return random == 0;
+}
+
+void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
+    PowerUpAttribute puAttr;
+    puAttr.size = glm::vec2(60.0f, 20.0f);
+    puAttr.velocity = glm::vec2(0.0f, 150.0f);
+    puAttr.position = object->Attr()->position;
+    if (shouldSpawn(75)) {
+        puAttr.type = "speed";
+        puAttr.color = glm::vec3(0.5f, 0.5f, 1.0f);
+        puAttr.duration = 0.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+    if (shouldSpawn(75)) {
+        puAttr.type = "sticky";
+        puAttr.color = glm::vec3(1.0f, 0.5f, 1.0f);
+        puAttr.duration = 20.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+    if (shouldSpawn(75)) {
+        puAttr.type = "pass-through";
+        puAttr.color = glm::vec3(0.5f, 1.0f, 0.5f);
+        puAttr.duration = 10.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+    if (shouldSpawn(75)) {
+        puAttr.type = "pad-size-increase";
+        puAttr.color = glm::vec3(1.0f, 0.6f, 0.4f);
+        puAttr.duration = 0.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+    if (shouldSpawn(15)) {
+        puAttr.type = "confuse";
+        puAttr.color = glm::vec3(1.0f, 0.3f, 0.3f);
+        puAttr.duration = 3.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+    if (shouldSpawn(15)) {
+        puAttr.type = "chaos";
+        puAttr.color = glm::vec3(0.9f, 0.25f, 0.25f);
+        puAttr.duration = 3.0f;
+        puAttr.texture = ResourceManager::GetInstance()->
+            GetTexture2D(puAttr.type);
+        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+    }
+}
+
+void Game::activatePowerUp(const std::shared_ptr<PowerUp>& p) {
+    if (p->Attr()->type == "speed") {
+        ball->Attr()->velocity *= 1.2;
+    } else if (p->Attr()->type == "sticky") {
+        ball->Attr()->isSticky = true;
+        player->Attr()->color = glm::vec3(1.0f, 0.5f, 1.0f);
+    } else if (p->Attr()->type == "pass-through") {
+        ball->Attr()->isPassThrough = true;
+        ball->Attr()->color = glm::vec3(1.0f, 0.5f, 0.5f);
+    } else if (p->Attr()->type == "pad-size-increase") {
+        player->Attr()->size.x += 50;
+    } else if (p->Attr()->type == "confuse") {
+        if (!effects->chaos) {
+            effects->confuse = true;
+        }
+    } else if (p->Attr()->type == "chaos") {
+        if (!effects->confuse) {
+            effects->chaos = true;
+        }
+    }
+}
+
+void Game::updatePowerUps(float dt) {
+    for (auto& p : powerUps) {
+        p->Update(dt);
+        if (p->Attr()->isActive) {
+            p->Attr()->duration -= dt;
+        }
+        if (p->Attr()->duration <= 0.0f) {
+            p->Attr()->isActive = false;
+            if (p->Attr()->type == "sticky") {
+                if (!otherActivePowerUp("sticky")) {
+                    ball->Attr()->isSticky = false;
+                    player->Attr()->color = glm::vec3(1.0f);
+                }
+            } else if (p->Attr()->type == "pass-through") {
+                if (!otherActivePowerUp("pass-through")) {
+                    ball->Attr()->isPassThrough = false;
+                    ball->Attr()->color = glm::vec3(1.0f);
+                }
+            } else if (p->Attr()->type == "confuse") {
+                if (!otherActivePowerUp("confuse")) {
+                    effects->confuse = false;
+                }
+            } else if (p->Attr()->type == "chaos") {
+                if (!otherActivePowerUp("chaos")) {
+                    effects->chaos = false;
+                }
+            }
+        }
+    }
+    powerUps.erase(
+        std::remove_if(
+            powerUps.begin(), powerUps.end(),
+            [] (const std::shared_ptr<PowerUp>& p) {
+                return p->Attr()->isDestroyed &&
+                    !p->Attr()->isActive;
+            }),
+        powerUps.end());
+}
+
+bool Game::otherActivePowerUp(const std::string& type) {
+    for (const auto& p : powerUps) {
+        if (p->Attr()->isActive && p->Attr()->type == type) {
+            return true;
+        }
+    }
+    return false;
 }
