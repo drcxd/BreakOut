@@ -14,3 +14,16 @@ PowerUpAttribute* PowerUp::Attr() {
 const PowerUpAttribute* PowerUp::Attr() const {
     return (const PowerUpAttribute*)GameObject::attr.get();
 }
+
+void PowerUp::Update(float dt) {
+    GameObject::Update(dt);
+    if (Attr()->isActive) {
+        Attr()->duration -= dt;
+    }
+    if (Attr()->duration <= 0.0f) {
+        Attr()->isActive = false;
+        if (Attr()->endCallback) {
+            Attr()->endCallback(this);
+        }
+    }
+}

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+#include <functional>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -381,6 +382,9 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
     puAttr.size = glm::vec2(60.0f, 20.0f);
     puAttr.velocity = glm::vec2(0.0f, 150.0f);
     puAttr.position = object->Attr()->position;
+    puAttr.endCallback = [=](const PowerUp* p) ->void {
+        this->onPowerUpEnd(p);
+    };
     if (shouldSpawn(75)) {
         puAttr.type = "speed";
         puAttr.color = glm::vec3(0.5f, 0.5f, 1.0f);
@@ -456,31 +460,6 @@ void Game::activatePowerUp(const std::shared_ptr<PowerUp>& p) {
 void Game::updatePowerUps(float dt) {
     for (auto& p : powerUps) {
         p->Update(dt);
-        if (p->Attr()->isActive) {
-            p->Attr()->duration -= dt;
-        }
-        if (p->Attr()->duration <= 0.0f) {
-            p->Attr()->isActive = false;
-            if (p->Attr()->type == "sticky") {
-                if (!otherActivePowerUp("sticky")) {
-                    ball->Attr()->isSticky = false;
-                    player->Attr()->color = glm::vec3(1.0f);
-                }
-            } else if (p->Attr()->type == "pass-through") {
-                if (!otherActivePowerUp("pass-through")) {
-                    ball->Attr()->isPassThrough = false;
-                    ball->Attr()->color = glm::vec3(1.0f);
-                }
-            } else if (p->Attr()->type == "confuse") {
-                if (!otherActivePowerUp("confuse")) {
-                    effects->confuse = false;
-                }
-            } else if (p->Attr()->type == "chaos") {
-                if (!otherActivePowerUp("chaos")) {
-                    effects->chaos = false;
-                }
-            }
-        }
     }
     powerUps.erase(
         std::remove_if(
@@ -499,4 +478,23 @@ bool Game::otherActivePowerUp(const std::string& type) {
         }
     }
     return false;
+}
+
+void Game::onPowerUpEnd(const PowerUp* p) {
+    const auto& type = p->Attr()->type;
+    if (type == "sticky") {
+        ball->Attr()->isSticky = false;
+        player->Attr()->color = glm::vec3(1.0f);
+    } else if (type == "pass-through") {
+        ball->Attr()->isPassThrough = false;
+        ball->Attr()->color = glm::vec3(1.0f);
+    } else if (type == "confuse") {
+        if (!otherActivePowerUp("confuse")) {
+            effects->confuse = false;
+        }
+    } else if (type == "chaos") {
+        if (!otherActivePowerUp("chaos")) {
+            effects->chaos = false;
+        }
+    }
 }

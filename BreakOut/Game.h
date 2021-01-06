@@ -51,6 +51,7 @@ private:
     void updatePowerUps(float dt);
     void activatePowerUp(const std::shared_ptr<PowerUp>& p);
     bool otherActivePowerUp(const std::string& type);
+    void onPowerUpEnd(const PowerUp* p);
 
     // Resources
     void loadResources();
