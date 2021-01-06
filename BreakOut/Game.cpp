@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fmt/core.h>
+#include <ik/irrKlang.h>
 
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
@@ -23,6 +24,7 @@
 #include "PostProcessor.h"
 #include "PowerUp.h"
 
+irrklang::ISoundEngine *soundEngine = irrklang::createIrrKlangDevice();
 PostProcessor* effects;
 SpriteRenderer* renderer;
 std::shared_ptr<GameObject> player;
@@ -106,6 +108,8 @@ void Game::Init() {
     effects = new PostProcessor(
         ResourceManager::GetInstance()->GetShader("postprocess"),
         width, height);
+
+    soundEngine->play2D("./resources/audio/breakout.mp3", true);
 }
 
 void Game::ProcessInput(float dt) {
@@ -239,10 +243,14 @@ void Game::doCollision() {
                 if (!ball->Attr()->isPassThrough) {
                     applyCollision(ball, info);
                 }
+                soundEngine->
+                    play2D("./resources/audio/bleep.mp3", false);
             } else {
                 shakeTime = 0.05f;
                 effects->shake = true;
                 applyCollision(ball, info);
+                soundEngine->
+                    play2D("./resources/audio/solid.wav", false);
             }
         }
     }
@@ -276,6 +284,7 @@ void Game::doCollision() {
             player->children.insert(ball);
             ball->Attr()->isStatic = true;
         }
+        soundEngine->play2D("./resources/audio/bleep.wav", false);
     }
 
     // Power up VS Player
@@ -291,6 +300,8 @@ void Game::doCollision() {
             activatePowerUp(p);
             p->Attr()->isDestroyed = true;
             p->Attr()->isActive = true;
+            soundEngine->
+                play2D("./resources/audio/powerup.wav", false);
         }
     }
 }
