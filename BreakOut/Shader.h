@@ -42,6 +42,12 @@ public:
                  const glm::vec4& value) const;
     void setTexture(const std::string& name, int value,
                     const std::shared_ptr<Texture2D>& tex);
+    void setFloatV(const std::string& name,
+                   const float* values, int num) const;
+    void setVec2V(const std::string& name,
+                  const float* values, int num) const;
+    void setIntV(const std::string& name,
+                 const int* values, int num) const;
 };
 
 #endif

@@ -17,11 +17,15 @@
 #include "GameObject.h"
 #include "Ball.h"
 #include "Particle.h"
+#include "PostProcessor.h"
 
+PostProcessor* effects;
 SpriteRenderer* renderer;
 std::shared_ptr<GameObject> player;
 std::shared_ptr<Ball> ball;
 std::shared_ptr<ParticleGenerator> particles;
+
+float shakeTime = 0.0f;
 
 const glm::vec2 BALL_VELOCITY = glm::vec2(200.0f, -200.0f);
 
@@ -94,6 +98,10 @@ void Game::Init() {
             ResourceManager::GetInstance()->GetShader("particle"),
             ResourceManager::GetInstance()->GetTexture2D("particle")
         );
+
+    effects = new PostProcessor(
+        ResourceManager::GetInstance()->GetShader("postprocess"),
+        width, height);
 }
 
 void Game::ProcessInput(float dt) {
@@ -122,10 +130,18 @@ void Game::Update(float dt) {
 
     particles->Update(dt, ball, 2,
                       glm::vec2(ball->ballAttribute.radius / 2.0f));
+
+    if (shakeTime > 0.0f) {
+        shakeTime -= dt;
+        if (shakeTime <= 0.0f) {
+            effects->shake = false;
+        }
+    }
 }
 
 void Game::Render() {
 
+    effects->BeginRender();
     auto background = ResourceManager::GetInstance()->
         GetTexture2D("background");
     renderer->Draw(background, glm::vec2(0.0f, 0.0f),
@@ -137,6 +153,8 @@ void Game::Render() {
     player->Draw(*renderer);
     particles->Draw();
     ball->Draw(*renderer);
+    effects->EndRender();
+    effects->Render((float)glfwGetTime());
 }
 
 void Game::loadResources() {
@@ -154,6 +172,10 @@ void Game::loadResources() {
                    "./shaders/particle.frag");
     particleShader->use();
     particleShader->setMat4("projection", projection);
+
+    ResourceManager::GetInstance()->
+        LoadShader("postprocess", "./shaders/postprocess.vert",
+                   "./shaders/postprocess.frag");
 
     ResourceManager::GetInstance()->
         LoadTexture2D("./resources/textures/particle.png",
@@ -183,6 +205,9 @@ void Game::doCollision() {
         if (!brick->attribute.isDestroyed && info.isCollided) {
             if (!brick->attribute.isSolid) {
                 brick->attribute.isDestroyed = true;
+            } else {
+                shakeTime = 0.05f;
+                effects->shake = true;
             }
             applyCollision(ball, info);
         }

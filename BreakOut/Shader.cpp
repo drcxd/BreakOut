@@ -120,3 +120,21 @@ void Shader::setVec4(const std::string& name,
     glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1,
                  glm::value_ptr(value));
 }
+
+void Shader::setFloatV(const std::string& name,
+                       const float* values, int num) const {
+    glUniform1fv(glGetUniformLocation(ID, name.c_str()), num,
+                 values);
+}
+
+void Shader::setVec2V(const std::string& name,
+                      const float* values, int num) const {
+    glUniform2fv(glGetUniformLocation(ID, name.c_str()), num,
+                 values);
+}
+
+void Shader::setIntV(const std::string& name,
+                     const int* values, int num) const {
+    glUniform1iv(glGetUniformLocation(ID, name.c_str()), num,
+                 values);
+}
