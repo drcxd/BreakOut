@@ -14,6 +14,7 @@ public:
     void Load(const char* path, int levelWidth, int levelHeight);
     void Draw(const SpriteRenderer& renderer) const;
     bool IsComplete() const;
+    void Reset();
 
     std::vector<std::shared_ptr<GameObject>> bricks;
 

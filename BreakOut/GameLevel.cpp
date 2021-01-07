@@ -121,3 +121,9 @@ void GameLevel::init(const std::vector<std::vector<int>>& tileData,
         }
     }
 }
+
+void GameLevel::Reset() {
+    for (auto& brick : bricks) {
+        brick->Attr()->isDestroyed = false;
+    }
+}

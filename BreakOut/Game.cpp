@@ -36,6 +36,7 @@ std::shared_ptr<ParticleGenerator> particles;
 float shakeTime = 0.0f;
 
 const glm::vec2 BALL_VELOCITY = glm::vec2(200.0f, -200.0f);
+const glm::vec2 PLAYER_SIZE = glm::vec2(100.0f, 20.0f);
 
 Game::Game(int width, int height)
     : width(width)
@@ -119,62 +120,137 @@ void Game::Init() {
 }
 
 void Game::ProcessInput(float dt) {
-    auto& playerAttr = *player->Attr();
-    if (keys[GLFW_KEY_A] && keys[GLFW_KEY_D] ||
-        !keys[GLFW_KEY_A] && !keys[GLFW_KEY_D]) {
-        playerAttr.velocity.x = 0.0f;
-    } else if (keys[GLFW_KEY_A]) {
-        playerAttr.velocity.x = -500.0f;
-    } else {
-        playerAttr.velocity.x = 500.0f;
+    if (state == GameState::GAME_ACTIVE) {
+        auto& playerAttr = *player->Attr();
+        if (keys[GLFW_KEY_A] && keys[GLFW_KEY_D] ||
+            !keys[GLFW_KEY_A] && !keys[GLFW_KEY_D]) {
+            playerAttr.velocity.x = 0.0f;
+        } else if (keys[GLFW_KEY_A]) {
+            playerAttr.velocity.x = -500.0f;
+        } else {
+            playerAttr.velocity.x = 500.0f;
+        }
+
+        if (keys[GLFW_KEY_SPACE] && ball->Attr()->isStatic) {
+            ball->Attr()->isStatic = false;
+            player->children.erase(ball);
+            objects.insert(ball);
+        }
+
+        if (keys[GLFW_KEY_C] && !processed[GLFW_KEY_C]) {
+            effects->chaos = true;
+            state = GameState::GAME_WIN;
+        }
+    } else if (state == GameState::GAME_MENU) {
+        if (keys[GLFW_KEY_W] && !processed[GLFW_KEY_W]) {
+            --level;
+            level = (level + 4) % 4;
+            processed[GLFW_KEY_W] = true;
+        }
+        if (keys[GLFW_KEY_S] && !processed[GLFW_KEY_S]) {
+            ++level;
+            level %= 4;
+            processed[GLFW_KEY_S] = true;
+        }
+        if (keys[GLFW_KEY_ENTER] && !processed[GLFW_KEY_ENTER]) {
+            state = GameState::GAME_ACTIVE;
+            processed[GLFW_KEY_ENTER] = true;
+            reset_player();
+            reset_ball();
+            clear_powerups();
+            player->children.insert(ball);
+            objects.erase(ball);
+            play_ball = 2;
+        }
+    } else if (state == GameState::GAME_WIN) {
+        if (keys[GLFW_KEY_ENTER] && !processed[GLFW_KEY_ENTER]) {
+            reset_level();
+            effects->chaos = false;
+            state = GameState::GAME_MENU;
+            processed[GLFW_KEY_ENTER] = true;
+        }
     }
 
-    if (keys[GLFW_KEY_SPACE] && ball->Attr()->isStatic) {
-        ball->Attr()->isStatic = false;
-        player->children.erase(ball);
-        objects.insert(ball);
-    }
 }
 
 void Game::Update(float dt) {
-    for (auto& object : objects) {
-        object->Update(dt);
-    }
-    doCollision();
+    if (state == GameState::GAME_ACTIVE) {
+        for (auto& object : objects) {
+            object->Update(dt);
+        }
+        doCollision();
 
-    particles->Update(dt, ball, 2,
-                      glm::vec2(ball->Attr()->radius / 2.0f));
+        particles->Update(dt, ball, 2,
+                          glm::vec2(ball->Attr()->radius / 2.0f));
 
-    updatePowerUps(dt);
+        updatePowerUps(dt);
 
-    if (shakeTime > 0.0f) {
-        shakeTime -= dt;
-        if (shakeTime <= 0.0f) {
-            effects->shake = false;
+        if (shakeTime > 0.0f) {
+            shakeTime -= dt;
+            if (shakeTime <= 0.0f) {
+                effects->shake = false;
+            }
+        }
+
+        if (ball->Attr()->position.y > height + 200) {
+            --play_ball;
+            if (play_ball >= 0) {
+                reset_player();
+                reset_ball();
+                player->children.insert(ball);
+                objects.erase(ball);
+            } else {
+                state = GameState::GAME_MENU;
+            }
+        }
+
+        if (levels[level]->IsComplete()) {
+            state = GameState::GAME_WIN;
+            effects->chaos = true;
         }
     }
 }
 
 void Game::Render() {
-
     effects->BeginRender();
+
     auto background = ResourceManager::GetInstance()->
         GetTexture2D("background");
     renderer->Draw(background, glm::vec2(0.0f, 0.0f),
                    glm::vec2(this->width, this->height), 0.0f,
                    glm::vec3(1.0f, 1.0f, 1.0f));
 
-    levels[0]->Draw(*renderer);
+    levels[level]->Draw(*renderer);
     for (auto& p : powerUps) {
         if (!p->Attr()->isDestroyed) {
             p->Draw(*renderer);
         }
     }
-
     player->Draw(*renderer);
     particles->Draw();
     ball->Draw(*renderer);
-    textRenderer->RenderText("Hello World", glm::vec2(0.0f, 0.0f));
+
+    textRenderer->RenderText(fmt::format("Ball: {}", play_ball),
+                             glm::vec2(0.0f, 0.0f), 0.5f);
+
+    if (state == GameState::GAME_MENU) {
+        textRenderer->RenderText("Press ENTER to start",
+                                 glm::vec2(width / 2 - 150, height / 2 - 50),
+                                 0.75f);
+        textRenderer->RenderText("Press W or S to select level",
+                                 glm::vec2(width / 2 - 200, height / 2 + 48 - 50),
+                                 0.75f);
+    }
+
+    if (state == GameState::GAME_WIN) {
+        textRenderer->RenderText("You Won!",
+                                 glm::vec2(width / 2 - 100, height / 2 - 50),
+                                 0.75f);
+        textRenderer->RenderText("Press Enter to Retry, Press ESC to quit",
+                                 glm::vec2(width / 2 - 250, height/ 2 + 48 - 50),
+                                 0.75f);
+    }
+
     effects->EndRender();
     effects->Render((float)glfwGetTime());
 }
@@ -241,15 +317,22 @@ void Game::loadResources() {
     ResourceManager::GetInstance()->
         LoadTexture2D("./resources/textures/powerup_sticky.png",
                       "sticky");
-
-    levels.emplace_back(std::make_shared<GameLevel>());
+    for (int i = 0; i < 4; ++i) {
+        levels.emplace_back(std::make_shared<GameLevel>());
+    }
     levels[0]->Load("./resources/levels/one.lvl",
+                    this->width, this->height / 2);
+    levels[1]->Load("./resources/levels/two.lvl",
+                    this->width, this->height / 2);
+    levels[2]->Load("./resources/levels/three.lvl",
+                    this->width, this->height / 2);
+    levels[3]->Load("./resources/levels/four.lvl",
                     this->width, this->height / 2);
 }
 
 void Game::doCollision() {
     // Ball VS Bricks
-    for (auto& brick : levels[0]->bricks) {
+    for (auto& brick : levels[level]->bricks) {
         auto info = checkCollision(ball, brick);
         if (!brick->Attr()->isDestroyed && info.isCollided) {
             if (!brick->Attr()->isSolid) {
@@ -523,4 +606,33 @@ void Game::onPowerUpEnd(const PowerUp* p) {
             effects->chaos = false;
         }
     }
+}
+
+void Game::reset_player() {
+    player->Attr()->size = PLAYER_SIZE;
+    player->Attr()->position = glm::vec2(
+        width / 2.0f - player->Attr()->size.x / 2.0f,
+        height  - player->Attr()->size.y
+        );
+}
+
+void Game::reset_ball() {
+    ball->Attr()->velocity = BALL_VELOCITY;
+    ball->Attr()->position = glm::vec2(
+        player->Attr()->position.x + player->Attr()->size.x / 2.0f -
+        ball->Attr()->size.x / 2.0f,
+        player->Attr()->position.y - ball->Attr()->size.y
+        );
+    ball->Attr()->isStatic = true;
+}
+
+void Game::clear_powerups() {
+    for (auto& p : powerUps) {
+        onPowerUpEnd(p.get());
+    }
+    powerUps.clear();
+}
+
+void Game::reset_level() {
+    levels[level]->Reset();
 }

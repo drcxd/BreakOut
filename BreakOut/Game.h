@@ -33,11 +33,15 @@ public:
     void Update(float dt);
     void Render();
 
-    GameState state;
+    GameState state = GameState::GAME_MENU;
     bool keys[1024];
+    bool processed[1024];
     int width, height;
 
 private:
+
+    int play_ball = 2;
+    int level = 0;
 
     // Objects
     std::vector<std::shared_ptr<GameObject>> boundary;
@@ -65,6 +69,12 @@ private:
     glm::vec2 calculateCollisionDirection(const glm::vec2& dir);
     void applyCollision(std::shared_ptr<Ball>& ball,
                         const CollisionInfo& info);
+
+    // Game Logic
+    void reset_player();
+    void reset_ball();
+    void reset_level();
+    void clear_powerups();
 };
 
 #endif
