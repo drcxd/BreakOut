@@ -100,11 +100,11 @@ LoadTexture2D(const char* path, const std::string& name,
             GL_LINEAR_MIPMAP_LINEAR});
     params.push_back({GL_TEXTURE_MAG_FILTER, GL_LINEAR});
     TextureSource ts = {
-        path,
         internalFormat,
         width, height,
         dataFormat, GL_UNSIGNED_BYTE,
         data,
+        true,
         params
     };
 

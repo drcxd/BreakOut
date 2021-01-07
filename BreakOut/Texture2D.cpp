@@ -10,7 +10,9 @@ Texture2D::Texture2D(TextureSource* texture) {
     glTexImage2D(GL_TEXTURE_2D, 0, texture->internalFormat,
                  texture->width, texture->height, 0,
                  texture->format, texture->type, texture->data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (texture->mipmap) {
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
     SetTexParams(texture->params);
     glBindTexture(GL_TEXTURE_2D, 0);
     Utility::CheckGLError();

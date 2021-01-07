@@ -11,12 +11,12 @@ struct TexParameteri {
 };
 
 struct TextureSource {
-    const char* name = nullptr;
     GLint internalFormat = GL_RGB;
     int width = 0, height = 0;
     GLenum format = GL_RGB;
     GLenum type = GL_UNSIGNED_BYTE;
     void* data = nullptr;
+    bool mipmap = true;
     std::vector<TexParameteri> params = {
         { GL_TEXTURE_WRAP_S, GL_REPEAT },
         { GL_TEXTURE_WRAP_T, GL_REPEAT },

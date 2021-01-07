@@ -23,10 +23,12 @@
 #include "Particle.h"
 #include "PostProcessor.h"
 #include "PowerUp.h"
+#include "TextRenderer.h"
 
 irrklang::ISoundEngine *soundEngine = irrklang::createIrrKlangDevice();
 PostProcessor* effects;
 SpriteRenderer* renderer;
+TextRenderer* textRenderer;
 std::shared_ptr<GameObject> player;
 std::shared_ptr<Ball> ball;
 std::shared_ptr<ParticleGenerator> particles;
@@ -49,6 +51,10 @@ void Game::Init() {
     auto spriteShader = ResourceManager::GetInstance()->
         GetShader("sprite");
     renderer = new SpriteRenderer(spriteShader);
+
+    auto fontShader = ResourceManager::GetInstance()->
+        GetShader("text");
+    textRenderer = new TextRenderer(fontShader);
 
     // Player
     GameObjectAttribute attr;
@@ -168,6 +174,7 @@ void Game::Render() {
     player->Draw(*renderer);
     particles->Draw();
     ball->Draw(*renderer);
+    textRenderer->RenderText("Hello World", glm::vec2(0.0f, 0.0f));
     effects->EndRender();
     effects->Render((float)glfwGetTime());
 }
@@ -187,6 +194,14 @@ void Game::loadResources() {
                    "./shaders/particle.frag");
     particleShader->use();
     particleShader->setMat4("projection", projection);
+
+    projection = glm::ortho(0.0f, (float)width,
+                            float(height), 0.0f);
+    auto textShader = ResourceManager::GetInstance()->
+        LoadShader("text", "./shaders/font.vert",
+                   "./shaders/font.frag");
+    textShader->use();
+    textShader->setMat4("projection", projection);
 
     ResourceManager::GetInstance()->
         LoadShader("postprocess", "./shaders/postprocess.vert",
