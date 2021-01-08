@@ -34,7 +34,7 @@ ParticleGenerator::
 
 void
 ParticleGenerator::
-Update(float dt, const std::shared_ptr<GameObject> &object,
+Update(float dt, const GameObject* object,
        int newParticles, const glm::vec2& offset) {
     for (int i = 0; i < newParticles; ++i) {
         int j = getNextParticle();
@@ -88,7 +88,7 @@ int ParticleGenerator::getNextParticle() const {
 
 void ParticleGenerator::respawnParticle(
     Particle& p,
-    const std::shared_ptr<GameObject>& object,
+    const GameObject* object,
     const glm::vec2& offset) {
     float random = ((rand() % 100) - 50) / 10.0f;
     float color = 0.5f + ((rand() % 100) / 100.0f);

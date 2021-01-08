@@ -34,7 +34,7 @@ public:
     virtual GameObjectAttribute* Attr();
     virtual const GameObjectAttribute* Attr() const;
 
-    std::unordered_set<std::shared_ptr<GameObject>> children;
+    std::unordered_set<GameObject*> children;
 
 protected:
 

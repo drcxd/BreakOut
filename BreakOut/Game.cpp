@@ -29,8 +29,6 @@ irrklang::ISoundEngine *soundEngine = irrklang::createIrrKlangDevice();
 PostProcessor* effects;
 SpriteRenderer* renderer;
 TextRenderer* textRenderer;
-std::shared_ptr<GameObject> player;
-std::shared_ptr<Ball> ball;
 std::shared_ptr<ParticleGenerator> particles;
 
 float shakeTime = 0.0f;
@@ -39,10 +37,8 @@ const glm::vec2 BALL_VELOCITY = glm::vec2(200.0f, -200.0f);
 const glm::vec2 PLAYER_SIZE = glm::vec2(100.0f, 20.0f);
 
 Game::Game(int width, int height)
-    : width(width)
-    , height(height)
-    , state(GameState::GAME_MENU)
-    , keys{0} { }
+    : Width(width)
+    , Height(height) { }
 
 Game::~Game() { }
 
@@ -60,8 +56,8 @@ void Game::Init() {
     // Player
     GameObjectAttribute attr;
     attr.size = glm::vec2(100.0f, 20.0f);
-    attr.position = glm::vec2(this->width / 2 - attr.size.x / 2,
-                              this->height - attr.size.y);
+    attr.position = glm::vec2(this->Width / 2 - attr.size.x / 2,
+                              this->Height - attr.size.y);
     attr.velocity = glm::vec2(0.0f, 0.0f);
     attr.color = glm::vec3(1.0f, 1.0f, 1.0f);
     attr.rotation = 0;
@@ -69,7 +65,8 @@ void Game::Init() {
     attr.isDestroyed = false;
     attr.texture = ResourceManager::GetInstance()->
         GetTexture2D("paddle");
-    player = std::make_shared<GameObject>(attr);
+    player = std::make_unique<GameObject>(attr);
+    objects.insert(player.get());
 
     // Ball
     BallAttribute ballAttr;
@@ -87,24 +84,22 @@ void Game::Init() {
     ballAttr.isDestroyed = false;
     ballAttr.texture = ResourceManager::GetInstance()->
         GetTexture2D("face");
-    ball = std::make_shared<Ball>(ballAttr);
+    ball = std::make_unique<Ball>(ballAttr);
+    player->children.insert(ball.get());
 
     // Boundary
-    attr.size = glm::vec2(width, 1.0f);
+    attr.size = glm::vec2(Width, 1.0f);
     attr.position = glm::vec2(0.0f, -1.0f);
     attr.isSolid = true;
     attr.isDestroyed = false;
-    boundary.emplace_back(std::make_shared<GameObject>(attr));
+    boundary.emplace_back(std::make_unique<GameObject>(attr));
 
-    attr.size = glm::vec2(1.0f, height);
+    attr.size = glm::vec2(1.0f, Height);
     attr.position = glm::vec2(-1.0f, 0.0f);
-    boundary.emplace_back(std::make_shared<GameObject>(attr));
+    boundary.emplace_back(std::make_unique<GameObject>(attr));
 
-    attr.position = glm::vec2(width, 0.0f);
-    boundary.emplace_back(std::make_shared<GameObject>(attr));
-
-    player->children.insert(ball);
-    objects.insert(player);
+    attr.position = glm::vec2(Width, 0.0f);
+    boundary.emplace_back(std::make_unique<GameObject>(attr));
 
     particles = std::make_shared<ParticleGenerator>(
             500,
@@ -114,73 +109,73 @@ void Game::Init() {
 
     effects = new PostProcessor(
         ResourceManager::GetInstance()->GetShader("postprocess"),
-        width, height);
+        Width, Height);
 
     soundEngine->play2D("./resources/audio/breakout.mp3", true);
 }
 
 void Game::ProcessInput(float dt) {
-    if (state == GameState::GAME_ACTIVE) {
+    if (State == GameState::GAME_ACTIVE) {
         auto& playerAttr = *player->Attr();
-        if (keys[GLFW_KEY_A] && keys[GLFW_KEY_D] ||
-            !keys[GLFW_KEY_A] && !keys[GLFW_KEY_D]) {
+        if (Keys[GLFW_KEY_A] && Keys[GLFW_KEY_D] ||
+            !Keys[GLFW_KEY_A] && !Keys[GLFW_KEY_D]) {
             playerAttr.velocity.x = 0.0f;
-        } else if (keys[GLFW_KEY_A]) {
+        } else if (Keys[GLFW_KEY_A]) {
             playerAttr.velocity.x = -500.0f;
         } else {
             playerAttr.velocity.x = 500.0f;
         }
 
-        if (keys[GLFW_KEY_SPACE] && ball->Attr()->isStatic) {
+        if (Keys[GLFW_KEY_SPACE] && ball->Attr()->isStatic) {
             ball->Attr()->isStatic = false;
-            player->children.erase(ball);
-            objects.insert(ball);
+            player->children.erase(ball.get());
+            objects.insert(ball.get());
         }
 
-        if (keys[GLFW_KEY_C] && !processed[GLFW_KEY_C]) {
+        if (Keys[GLFW_KEY_C] && !Processed[GLFW_KEY_C]) {
             effects->chaos = true;
-            state = GameState::GAME_WIN;
+            State = GameState::GAME_WIN;
         }
-    } else if (state == GameState::GAME_MENU) {
-        if (keys[GLFW_KEY_W] && !processed[GLFW_KEY_W]) {
+    } else if (State == GameState::GAME_MENU) {
+        if (Keys[GLFW_KEY_W] && !Processed[GLFW_KEY_W]) {
             --level;
             level = (level + 4) % 4;
-            processed[GLFW_KEY_W] = true;
+            Processed[GLFW_KEY_W] = true;
         }
-        if (keys[GLFW_KEY_S] && !processed[GLFW_KEY_S]) {
+        if (Keys[GLFW_KEY_S] && !Processed[GLFW_KEY_S]) {
             ++level;
             level %= 4;
-            processed[GLFW_KEY_S] = true;
+            Processed[GLFW_KEY_S] = true;
         }
-        if (keys[GLFW_KEY_ENTER] && !processed[GLFW_KEY_ENTER]) {
-            state = GameState::GAME_ACTIVE;
-            processed[GLFW_KEY_ENTER] = true;
+        if (Keys[GLFW_KEY_ENTER] && !Processed[GLFW_KEY_ENTER]) {
+            State = GameState::GAME_ACTIVE;
+            Processed[GLFW_KEY_ENTER] = true;
             reset_player();
             reset_ball();
             clear_powerups();
-            player->children.insert(ball);
-            objects.erase(ball);
+            player->children.insert(ball.get());
+            objects.erase(ball.get());
             play_ball = 2;
         }
-    } else if (state == GameState::GAME_WIN) {
-        if (keys[GLFW_KEY_ENTER] && !processed[GLFW_KEY_ENTER]) {
+    } else if (State == GameState::GAME_WIN) {
+        if (Keys[GLFW_KEY_ENTER] && !Processed[GLFW_KEY_ENTER]) {
             reset_level();
             effects->chaos = false;
-            state = GameState::GAME_MENU;
-            processed[GLFW_KEY_ENTER] = true;
+            State = GameState::GAME_MENU;
+            Processed[GLFW_KEY_ENTER] = true;
         }
     }
 
 }
 
 void Game::Update(float dt) {
-    if (state == GameState::GAME_ACTIVE) {
+    if (State == GameState::GAME_ACTIVE) {
         for (auto& object : objects) {
             object->Update(dt);
         }
         doCollision();
 
-        particles->Update(dt, ball, 2,
+        particles->Update(dt, ball.get(), 2,
                           glm::vec2(ball->Attr()->radius / 2.0f));
 
         updatePowerUps(dt);
@@ -192,20 +187,20 @@ void Game::Update(float dt) {
             }
         }
 
-        if (ball->Attr()->position.y > height + 200) {
+        if (ball->Attr()->position.y > Height + 200) {
             --play_ball;
             if (play_ball >= 0) {
                 reset_player();
                 reset_ball();
-                player->children.insert(ball);
-                objects.erase(ball);
+                player->children.insert(ball.get());
+                objects.erase(ball.get());
             } else {
-                state = GameState::GAME_MENU;
+                State = GameState::GAME_MENU;
             }
         }
 
         if (levels[level]->IsComplete()) {
-            state = GameState::GAME_WIN;
+            State = GameState::GAME_WIN;
             effects->chaos = true;
         }
     }
@@ -217,7 +212,7 @@ void Game::Render() {
     auto background = ResourceManager::GetInstance()->
         GetTexture2D("background");
     renderer->Draw(background, glm::vec2(0.0f, 0.0f),
-                   glm::vec2(this->width, this->height), 0.0f,
+                   glm::vec2(this->Width, this->Height), 0.0f,
                    glm::vec3(1.0f, 1.0f, 1.0f));
 
     levels[level]->Draw(*renderer);
@@ -233,21 +228,21 @@ void Game::Render() {
     textRenderer->RenderText(fmt::format("Ball: {}", play_ball),
                              glm::vec2(0.0f, 0.0f), 0.5f);
 
-    if (state == GameState::GAME_MENU) {
+    if (State == GameState::GAME_MENU) {
         textRenderer->RenderText("Press ENTER to start",
-                                 glm::vec2(width / 2 - 150, height / 2 - 50),
+                                 glm::vec2(Width / 2 - 150, Height / 2 - 50),
                                  0.75f);
         textRenderer->RenderText("Press W or S to select level",
-                                 glm::vec2(width / 2 - 200, height / 2 + 48 - 50),
+                                 glm::vec2(Width / 2 - 200, Height / 2 + 48 - 50),
                                  0.75f);
     }
 
-    if (state == GameState::GAME_WIN) {
+    if (State == GameState::GAME_WIN) {
         textRenderer->RenderText("You Won!",
-                                 glm::vec2(width / 2 - 100, height / 2 - 50),
+                                 glm::vec2(Width / 2 - 100, Height / 2 - 50),
                                  0.75f);
         textRenderer->RenderText("Press Enter to Retry, Press ESC to quit",
-                                 glm::vec2(width / 2 - 250, height/ 2 + 48 - 50),
+                                 glm::vec2(Width / 2 - 250, Height/ 2 + 48 - 50),
                                  0.75f);
     }
 
@@ -260,7 +255,7 @@ void Game::loadResources() {
         LoadShader("sprite", "./shaders/sprite.vert",
                    "./shaders/sprite.frag");
     glm::mat4 projection =
-        glm::ortho(0.0f, (float)width, (float)height, 0.0f,
+        glm::ortho(0.0f, (float)Width, (float)Height, 0.0f,
                    -1.0f, 1.0f);
     spriteShader->use();
     spriteShader->setMat4("projection", projection);
@@ -271,8 +266,8 @@ void Game::loadResources() {
     particleShader->use();
     particleShader->setMat4("projection", projection);
 
-    projection = glm::ortho(0.0f, (float)width,
-                            float(height), 0.0f);
+    projection = glm::ortho(0.0f, (float)Width,
+                            float(Height), 0.0f);
     auto textShader = ResourceManager::GetInstance()->
         LoadShader("text", "./shaders/font.vert",
                    "./shaders/font.frag");
@@ -318,35 +313,35 @@ void Game::loadResources() {
         LoadTexture2D("./resources/textures/powerup_sticky.png",
                       "sticky");
     for (int i = 0; i < 4; ++i) {
-        levels.emplace_back(std::make_shared<GameLevel>());
+        levels.emplace_back(std::make_unique<GameLevel>());
     }
     levels[0]->Load("./resources/levels/one.lvl",
-                    this->width, this->height / 2);
+                    this->Width, this->Height / 2);
     levels[1]->Load("./resources/levels/two.lvl",
-                    this->width, this->height / 2);
+                    this->Width, this->Height / 2);
     levels[2]->Load("./resources/levels/three.lvl",
-                    this->width, this->height / 2);
+                    this->Width, this->Height / 2);
     levels[3]->Load("./resources/levels/four.lvl",
-                    this->width, this->height / 2);
+                    this->Width, this->Height / 2);
 }
 
 void Game::doCollision() {
     // Ball VS Bricks
     for (auto& brick : levels[level]->bricks) {
-        auto info = checkCollision(ball, brick);
+        auto info = checkCollision(ball.get(), brick.get());
         if (!brick->Attr()->isDestroyed && info.isCollided) {
             if (!brick->Attr()->isSolid) {
                 brick->Attr()->isDestroyed = true;
-                spawnPowerUps(brick);
+                spawnPowerUps(brick.get());
                 if (!ball->Attr()->isPassThrough) {
-                    applyCollision(ball, info);
+                    applyCollision(ball.get(), info);
                 }
                 soundEngine->
                     play2D("./resources/audio/bleep.mp3", false);
             } else {
                 shakeTime = 0.05f;
                 effects->shake = true;
-                applyCollision(ball, info);
+                applyCollision(ball.get(), info);
                 soundEngine->
                     play2D("./resources/audio/solid.wav", false);
             }
@@ -355,14 +350,14 @@ void Game::doCollision() {
 
     // Ball VS Boundary
     for (auto& bound : boundary) {
-        auto info = checkCollision(ball, bound);
+        auto info = checkCollision(ball.get(), bound.get());
         if (info.isCollided) {
-            applyCollision(ball, info);
+            applyCollision(ball.get(), info);
         }
     }
 
     // Ball VS Player
-    auto info = checkCollision(ball, player);
+    auto info = checkCollision(ball.get(), player.get());
     if (!ball->Attr()->isStatic && info.isCollided) {
         float playerCenter = player->Attr()->position.x +
             player->Attr()->size.x / 2.0f;
@@ -378,8 +373,8 @@ void Game::doCollision() {
         ball->Attr()->velocity.y = -1.0f *
             std::fabs(ball->Attr()->velocity.y);
         if (ball->Attr()->isSticky) {
-            objects.erase(ball);
-            player->children.insert(ball);
+            objects.erase(ball.get());
+            player->children.insert(ball.get());
             ball->Attr()->isStatic = true;
         }
         soundEngine->play2D("./resources/audio/bleep.wav", false);
@@ -390,12 +385,12 @@ void Game::doCollision() {
         if (p->Attr()->isDestroyed) {
             continue;
         }
-        if (p->Attr()->position.y >= height) {
+        if (p->Attr()->position.y >= Height) {
             p->Attr()->isDestroyed = true;
             continue;
         }
-        if (checkCollision(player, p)) {
-            activatePowerUp(p);
+        if (checkCollision(player.get(), p.get())) {
+            activatePowerUp(p.get());
             p->Attr()->isDestroyed = true;
             p->Attr()->isActive = true;
             soundEngine->
@@ -404,9 +399,8 @@ void Game::doCollision() {
     }
 }
 
-bool Game::checkCollision(
-    const std::shared_ptr<GameObject>& obj1,
-    const std::shared_ptr<GameObject>& obj2) const {
+bool Game::checkCollision(const GameObject* obj1,
+                          const GameObject* obj2) const {
     bool collisionX =
         obj1->Attr()->position.x + obj1->Attr()->size.x >=
         obj2->Attr()->position.x &&
@@ -421,8 +415,8 @@ bool Game::checkCollision(
 }
 
 CollisionInfo
-Game::checkCollision(std::shared_ptr<Ball>& ball,
-                     std::shared_ptr<GameObject>& brick) {
+Game::checkCollision(const Ball* ball,
+                     const GameObject* brick) {
     glm::vec2 ballCenter = ball->Attr()->position +
         glm::vec2(ball->Attr()->radius);
     glm::vec2 halfSize = brick->Attr()->size * 0.5f;
@@ -463,8 +457,7 @@ Game::calculateCollisionDirection(const glm::vec2& dir) {
     return compass[best];
 }
 
-void Game::applyCollision(std::shared_ptr<Ball>& ball,
-                          const CollisionInfo& info) {
+void Game::applyCollision(Ball* ball, const CollisionInfo& info) {
     if (info.direction == glm::vec2(1.0f, 0.0f) ||
         info.direction == glm::vec2(-1.0f, 0.0f)) {
         ball->Attr()->velocity.x *= -1.0f;
@@ -486,7 +479,7 @@ bool Game::shouldSpawn(int chance) const {
     return random == 0;
 }
 
-void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
+void Game::spawnPowerUps(const GameObject* object) {
     PowerUpAttribute puAttr;
     puAttr.size = glm::vec2(60.0f, 20.0f);
     puAttr.velocity = glm::vec2(0.0f, 150.0f);
@@ -500,7 +493,7 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 0.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
     if (shouldSpawn(75)) {
         puAttr.type = "sticky";
@@ -508,7 +501,7 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 20.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
     if (shouldSpawn(75)) {
         puAttr.type = "pass-through";
@@ -516,7 +509,7 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 10.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
     if (shouldSpawn(75)) {
         puAttr.type = "pad-size-increase";
@@ -524,7 +517,7 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 0.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
     if (shouldSpawn(15)) {
         puAttr.type = "confuse";
@@ -532,7 +525,7 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 3.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
     if (shouldSpawn(15)) {
         puAttr.type = "chaos";
@@ -540,11 +533,11 @@ void Game::spawnPowerUps(const std::shared_ptr<GameObject>& object) {
         puAttr.duration = 3.0f;
         puAttr.texture = ResourceManager::GetInstance()->
             GetTexture2D(puAttr.type);
-        powerUps.push_back(std::make_shared<PowerUp>(puAttr));
+        powerUps.push_back(std::make_unique<PowerUp>(puAttr));
     }
 }
 
-void Game::activatePowerUp(const std::shared_ptr<PowerUp>& p) {
+void Game::activatePowerUp(const PowerUp* p) {
     if (p->Attr()->type == "speed") {
         ball->Attr()->velocity *= 1.2;
     } else if (p->Attr()->type == "sticky") {
@@ -573,7 +566,7 @@ void Game::updatePowerUps(float dt) {
     powerUps.erase(
         std::remove_if(
             powerUps.begin(), powerUps.end(),
-            [] (const std::shared_ptr<PowerUp>& p) {
+            [] (const std::unique_ptr<PowerUp>& p) {
                 return p->Attr()->isDestroyed &&
                     !p->Attr()->isActive;
             }),
@@ -611,8 +604,8 @@ void Game::onPowerUpEnd(const PowerUp* p) {
 void Game::reset_player() {
     player->Attr()->size = PLAYER_SIZE;
     player->Attr()->position = glm::vec2(
-        width / 2.0f - player->Attr()->size.x / 2.0f,
-        height  - player->Attr()->size.y
+        Width / 2.0f - player->Attr()->size.x / 2.0f,
+        Height  - player->Attr()->size.y
         );
 }
 

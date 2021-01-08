@@ -29,7 +29,7 @@ public:
                       const std::shared_ptr<Shader>& shader,
                       const std::shared_ptr<Texture2D>& texture);
     ~ParticleGenerator();
-    void Update(float dt, const std::shared_ptr<GameObject> &object,
+    void Update(float dt, const GameObject* object,
                 int newParticles,
                 const glm::vec2& offset = glm::vec2(0.0f));
     void Draw();
@@ -46,7 +46,7 @@ private:
     void init();
     int getNextParticle() const;
     void respawnParticle(Particle& p,
-                         const std::shared_ptr<GameObject>& object,
+                         const GameObject* object,
                          const glm::vec2& offset = glm::vec2(0.0f));
 
     static const float particleQuad[];

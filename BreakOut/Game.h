@@ -33,10 +33,10 @@ public:
     void Update(float dt);
     void Render();
 
-    GameState state = GameState::GAME_MENU;
-    bool keys[1024];
-    bool processed[1024];
-    int width, height;
+    GameState State = GameState::GAME_MENU;
+    bool Keys[1024] = {0};
+    bool Processed[1024] = {0};
+    int Width, Height;
 
 private:
 
@@ -44,16 +44,19 @@ private:
     int level = 0;
 
     // Objects
-    std::vector<std::shared_ptr<GameObject>> boundary;
-    std::vector<std::shared_ptr<GameLevel>> levels;
-    std::unordered_set<std::shared_ptr<GameObject>> objects;
-    std::vector<std::shared_ptr<PowerUp>> powerUps;
+    std::vector<std::unique_ptr<GameObject>> boundary;
+    std::vector<std::unique_ptr<GameLevel>> levels;
+    std::vector<std::unique_ptr<PowerUp>> powerUps;
+    std::unique_ptr<GameObject> player;
+    std::unique_ptr<Ball> ball;
+
+    std::unordered_set<GameObject*> objects;
 
     // PowerUp
     bool shouldSpawn(int chance) const;
-    void spawnPowerUps(const std::shared_ptr<GameObject>& brick);
+    void spawnPowerUps(const GameObject* brick);
     void updatePowerUps(float dt);
-    void activatePowerUp(const std::shared_ptr<PowerUp>& p);
+    void activatePowerUp(const PowerUp* p);
     bool otherActivePowerUp(const std::string& type);
     void onPowerUpEnd(const PowerUp* p);
 
@@ -62,13 +65,12 @@ private:
 
     // Collision
     void doCollision();
-    bool checkCollision(const std::shared_ptr<GameObject>& obj1,
-                        const std::shared_ptr<GameObject>& obj2) const;
-    CollisionInfo checkCollision(std::shared_ptr<Ball>& ball,
-                                 std::shared_ptr<GameObject>& brick);
+    bool checkCollision(const GameObject* obj1,
+                        const GameObject* obj2) const;
+    CollisionInfo checkCollision(const Ball* ball,
+                                 const GameObject* brick);
     glm::vec2 calculateCollisionDirection(const glm::vec2& dir);
-    void applyCollision(std::shared_ptr<Ball>& ball,
-                        const CollisionInfo& info);
+    void applyCollision(Ball* ball, const CollisionInfo& info);
 
     // Game Logic
     void reset_player();
