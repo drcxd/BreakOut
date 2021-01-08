@@ -26,10 +26,6 @@
 #include "TextRenderer.h"
 
 irrklang::ISoundEngine *soundEngine = irrklang::createIrrKlangDevice();
-PostProcessor* effects;
-SpriteRenderer* renderer;
-TextRenderer* textRenderer;
-std::shared_ptr<ParticleGenerator> particles;
 
 float shakeTime = 0.0f;
 
@@ -47,11 +43,11 @@ void Game::Init() {
 
     auto spriteShader = ResourceManager::GetInstance()->
         GetShader("sprite");
-    renderer = new SpriteRenderer(spriteShader);
+    sprite_renderer = std::make_unique<SpriteRenderer>(spriteShader);
 
     auto fontShader = ResourceManager::GetInstance()->
         GetShader("text");
-    textRenderer = new TextRenderer(fontShader);
+    text_renderer = std::make_unique<TextRenderer>(fontShader);
 
     // Player
     GameObjectAttribute attr;
@@ -101,13 +97,13 @@ void Game::Init() {
     attr.position = glm::vec2(Width, 0.0f);
     boundary.emplace_back(std::make_unique<GameObject>(attr));
 
-    particles = std::make_shared<ParticleGenerator>(
+    particles = std::make_unique<ParticleGenerator>(
             500,
             ResourceManager::GetInstance()->GetShader("particle"),
             ResourceManager::GetInstance()->GetTexture2D("particle")
         );
 
-    effects = new PostProcessor(
+    effects = std::make_unique<PostProcessor>(
         ResourceManager::GetInstance()->GetShader("postprocess"),
         Width, Height);
 
@@ -211,37 +207,37 @@ void Game::Render() {
 
     auto background = ResourceManager::GetInstance()->
         GetTexture2D("background");
-    renderer->Draw(background, glm::vec2(0.0f, 0.0f),
+    sprite_renderer->Draw(background, glm::vec2(0.0f, 0.0f),
                    glm::vec2(this->Width, this->Height), 0.0f,
                    glm::vec3(1.0f, 1.0f, 1.0f));
 
-    levels[level]->Draw(*renderer);
+    levels[level]->Draw(*sprite_renderer);
     for (auto& p : powerUps) {
         if (!p->Attr()->isDestroyed) {
-            p->Draw(*renderer);
+            p->Draw(*sprite_renderer);
         }
     }
-    player->Draw(*renderer);
+    player->Draw(*sprite_renderer);
     particles->Draw();
-    ball->Draw(*renderer);
+    ball->Draw(*sprite_renderer);
 
-    textRenderer->RenderText(fmt::format("Ball: {}", play_ball),
+    text_renderer->RenderText(fmt::format("Ball: {}", play_ball),
                              glm::vec2(0.0f, 0.0f), 0.5f);
 
     if (State == GameState::GAME_MENU) {
-        textRenderer->RenderText("Press ENTER to start",
+        text_renderer->RenderText("Press ENTER to start",
                                  glm::vec2(Width / 2 - 150, Height / 2 - 50),
                                  0.75f);
-        textRenderer->RenderText("Press W or S to select level",
+        text_renderer->RenderText("Press W or S to select level",
                                  glm::vec2(Width / 2 - 200, Height / 2 + 48 - 50),
                                  0.75f);
     }
 
     if (State == GameState::GAME_WIN) {
-        textRenderer->RenderText("You Won!",
+        text_renderer->RenderText("You Won!",
                                  glm::vec2(Width / 2 - 100, Height / 2 - 50),
                                  0.75f);
-        textRenderer->RenderText("Press Enter to Retry, Press ESC to quit",
+        text_renderer->RenderText("Press Enter to Retry, Press ESC to quit",
                                  glm::vec2(Width / 2 - 250, Height/ 2 + 48 - 50),
                                  0.75f);
     }

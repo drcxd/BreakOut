@@ -11,6 +11,10 @@ class GameLevel;
 class Ball;
 class GameObject;
 class PowerUp;
+class TextRenderer;
+class SpriteRenderer;
+class PostProcessor;
+class ParticleGenerator;
 
 enum class GameState {
     GAME_ACTIVE,
@@ -49,8 +53,13 @@ private:
     std::vector<std::unique_ptr<PowerUp>> powerUps;
     std::unique_ptr<GameObject> player;
     std::unique_ptr<Ball> ball;
-
     std::unordered_set<GameObject*> objects;
+
+    // Rendering
+    std::unique_ptr<PostProcessor> effects;
+    std::unique_ptr<SpriteRenderer> sprite_renderer;
+    std::unique_ptr<TextRenderer> text_renderer;
+    std::unique_ptr<ParticleGenerator> particles;
 
     // PowerUp
     bool shouldSpawn(int chance) const;
