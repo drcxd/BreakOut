@@ -40,7 +40,7 @@ static const float blur_kernel[9] = {
     1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f
 };
 
-PostProcessor::PostProcessor(const std::shared_ptr<Shader> shader,
+PostProcessor::PostProcessor(const Shader* shader,
                              int width, int height)
     : shader(shader)
     , width(width)
@@ -65,7 +65,7 @@ PostProcessor::PostProcessor(const std::shared_ptr<Shader> shader,
     TextureSource ts;
     ts.width = width;
     ts.height = height;
-    texture = std::make_shared<Texture2D>(&ts);
+    texture = std::make_unique<Texture2D>(&ts);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D, texture->ID, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) !=
@@ -127,7 +127,7 @@ void PostProcessor::Render(float time) {
     shader->setInt("chaos", chaos);
     shader->setInt("shake", shake);
 
-    shader->setTexture("scene", 0, texture);
+    shader->setTexture("scene", 0, texture.get());
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);

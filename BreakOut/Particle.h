@@ -26,8 +26,8 @@ class ParticleGenerator {
 public:
 
     ParticleGenerator(int number,
-                      const std::shared_ptr<Shader>& shader,
-                      const std::shared_ptr<Texture2D>& texture);
+                      const Shader* shader,
+                      const Texture2D* texture);
     ~ParticleGenerator();
     void Update(float dt, const GameObject* object,
                 int newParticles,
@@ -36,8 +36,8 @@ public:
 
 private:
 
-    std::shared_ptr<Shader> shader;
-    std::shared_ptr<Texture2D> texture;
+    const Shader* shader;
+    const Texture2D* texture;
     GLuint VAO;
     GLuint VBO;
     const int number;

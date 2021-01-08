@@ -74,7 +74,7 @@ Shader::Shader(ShaderSource* vert, ShaderSource* frag,
 Shader::~Shader() {
     glDeleteProgram(ID);
 }
-void Shader::use() {
+void Shader::use() const {
     glUseProgram(ID);
 }
 
@@ -103,7 +103,7 @@ void Shader::setVec3( const std::string& name, float x, float y, float z) const 
 }
 
 void Shader::setTexture(const std::string& name, int value,
-                        const std::shared_ptr<Texture2D>& tex) {
+                        const Texture2D* tex) const {
     glActiveTexture(GL_TEXTURE0 + value);
     glBindTexture(GL_TEXTURE_2D, tex->ID);
     setInt(name, value);

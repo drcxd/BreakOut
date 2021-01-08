@@ -16,7 +16,7 @@ public:
     bool IsComplete() const;
     void Reset();
 
-    std::vector<std::shared_ptr<GameObject>> bricks;
+    std::vector<std::unique_ptr<GameObject>> bricks;
 
 private:
     void init(const std::vector<std::vector<int>>& tileData,

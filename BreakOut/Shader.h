@@ -25,7 +25,7 @@ public:
            ShaderSource* geom = nullptr);
     ~Shader();
     // use/active the shader
-    void use();
+    void use() const;
     // utility uniform functions
     void setBool(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;
@@ -41,7 +41,7 @@ public:
     void setVec4(const std::string& name,
                  const glm::vec4& value) const;
     void setTexture(const std::string& name, int value,
-                    const std::shared_ptr<Texture2D>& tex);
+                    const Texture2D* tex) const;
     void setFloatV(const std::string& name,
                    const float* values, int num) const;
     void setVec2V(const std::string& name,

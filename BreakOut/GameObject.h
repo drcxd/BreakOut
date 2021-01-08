@@ -17,7 +17,7 @@ struct GameObjectAttribute {
     float rotation = 0.0f;
     bool isSolid = true;
     bool isDestroyed = false;
-    std::shared_ptr<Texture2D> texture;
+    const Texture2D* texture;
 };
 
 class GameObject {

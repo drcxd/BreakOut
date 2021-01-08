@@ -17,8 +17,8 @@ const float ParticleGenerator::particleQuad[] = {
 };
 
 ParticleGenerator::
-ParticleGenerator(int number, const std::shared_ptr<Shader>& shader,
-                  const std::shared_ptr<Texture2D>& texture)
+ParticleGenerator(int number, const Shader* shader,
+                  const Texture2D* texture)
     : number(number)
     , shader(shader)
     , texture(texture)

@@ -13,7 +13,7 @@ class Shader;
 class Texture2D;
 
 struct Character {
-    std::shared_ptr<Texture2D> texture;
+    std::unique_ptr<Texture2D> texture;
     glm::ivec2 size;
     glm::ivec2 bearing;
     unsigned int advance;
@@ -21,7 +21,7 @@ struct Character {
 
 class TextRenderer {
 public:
-    TextRenderer(const std::shared_ptr<Shader>& shader);
+    TextRenderer(const Shader* shader);
     ~TextRenderer();
 
     void RenderText(const std::string& text, const glm::vec2& position,
@@ -34,7 +34,7 @@ private:
 
     GLuint VAO;
     GLuint VBO;
-    std::shared_ptr<Shader> shader;
+    const Shader* shader;
 
     std::unordered_map<char, Character> characters;
 

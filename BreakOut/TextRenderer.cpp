@@ -5,7 +5,7 @@
 #include "Shader.h"
 #include "Texture2D.h"
 
-TextRenderer::TextRenderer(const std::shared_ptr<Shader>& shader)
+TextRenderer::TextRenderer(const Shader* shader)
     : shader(shader) {
     if (FT_Init_FreeType(&ft)) {
         fmt::print("ERROR::FREETYPE: Failed init FreeType library!\n");
@@ -60,17 +60,16 @@ void TextRenderer::initCharacters() {
         ts.params.push_back({GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE});
         ts.params.push_back({GL_TEXTURE_MIN_FILTER, GL_LINEAR});
         ts.params.push_back({GL_TEXTURE_MAG_FILTER, GL_LINEAR});
-        auto texture = std::make_shared<Texture2D>(&ts);
 
         Character character = {
-            texture,
+            std::make_unique<Texture2D>(&ts),
             glm::ivec2(face->glyph->bitmap.width,
                        face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left,
                        face->glyph->bitmap_top),
             face->glyph->advance.x
         };
-        characters[c] = character;
+        characters[c] = std::move(character);
     }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
@@ -103,7 +102,7 @@ void TextRenderer::RenderText(const std::string& text,
             { xpos + w, ypos, 1.0f, 0.0f }
         };
 
-        shader->setTexture("text", 0, ch.texture);
+        shader->setTexture("text", 0, ch.texture.get());
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0,
                         sizeof(vertices), vertices);

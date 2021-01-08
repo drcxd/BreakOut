@@ -11,7 +11,7 @@ class Texture2D;
 class PostProcessor {
 public:
 
-    PostProcessor(const std::shared_ptr<Shader> shader,
+    PostProcessor(const Shader* shader,
                   int width, int height);
     ~PostProcessor();
 
@@ -20,8 +20,8 @@ public:
 
     void Render(float time);
 
-    std::shared_ptr<Shader> shader;
-    std::shared_ptr<Texture2D> texture = nullptr;
+    const Shader* shader;
+    std::unique_ptr<Texture2D> texture = nullptr;
     int width, height;
     bool confuse = false;
     bool chaos = false;

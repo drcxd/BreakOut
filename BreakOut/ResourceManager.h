@@ -14,18 +14,18 @@ public:
     ~ResourceManager();
     static ResourceManager* GetInstance();
 
-    std::shared_ptr<Shader>
+    Shader*
     LoadShader(const std::string& name, const char* vert,
                const char* frag, const char* geom = nullptr);
 
-    std::shared_ptr<Texture2D>
+    Texture2D*
     LoadTexture2D(const char* path, const std::string& name,
                   bool gammaCorrection = false);
 
-    std::shared_ptr<Shader>
+    Shader*
     GetShader(const std::string& name);
 
-    std::shared_ptr<Texture2D>
+    Texture2D*
     GetTexture2D(const std::string& name);
 
 private:
@@ -35,8 +35,8 @@ private:
     ResourceManager(const ResourceManager&) = delete;
 
     std::unordered_map<std::string,
-                       std::shared_ptr<Shader>> shaders;
+                       std::unique_ptr<Shader>> shaders;
     std::unordered_map<std::string,
-                       std::shared_ptr<Texture2D>> textures;
+                       std::unique_ptr<Texture2D>> textures;
 };
 #endif

@@ -117,7 +117,7 @@ void GameLevel::init(const std::vector<std::vector<int>>& tileData,
                 attr.texture = ResourceManager::GetInstance()->
                     GetTexture2D("brick");
             }
-            bricks.emplace_back(std::make_shared<GameObject>(attr));
+            bricks.emplace_back(std::make_unique<GameObject>(attr));
         }
     }
 }

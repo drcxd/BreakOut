@@ -31,7 +31,7 @@ ResourceManager* ResourceManager::GetInstance() {
     return singleton;
 }
 
-std::shared_ptr<Shader>
+Shader*
 ResourceManager::LoadShader(const std::string& name,
                             const char* vert,
                             const char* frag,
@@ -51,13 +51,13 @@ ResourceManager::LoadShader(const std::string& name,
     shaders.emplace(
         std::make_pair(
             name,
-            std::make_shared<Shader>(&vertS, &fragS,
+            std::make_unique<Shader>(&vertS, &fragS,
                                      geom ? &geomS : nullptr)));
 
-    return shaders[name];
+    return shaders[name].get();
 }
 
-std::shared_ptr<Texture2D>
+Texture2D*
 ResourceManager::
 LoadTexture2D(const char* path, const std::string& name,
               bool gammaCorrection) {
@@ -109,9 +109,9 @@ LoadTexture2D(const char* path, const std::string& name,
     };
 
     textures.emplace(name,
-                     std::make_shared<Texture2D>(&ts));
+                     std::make_unique<Texture2D>(&ts));
 
-    return textures[name];
+    return textures[name].get();
 }
 
 std::string LoadShaderCode(const char* file) {
@@ -129,18 +129,18 @@ std::string LoadShaderCode(const char* file) {
     return content.str();
 }
 
-std::shared_ptr<Shader>
+Shader*
 ResourceManager::GetShader(const std::string& name) {
     if (shaders.find(name) == shaders.end()) {
         return nullptr;
     }
-    return shaders[name];
+    return shaders[name].get();
 }
 
-std::shared_ptr<Texture2D>
+Texture2D*
 ResourceManager::GetTexture2D(const std::string& name) {
     if (textures.find(name) == textures.end()) {
         return nullptr;
     }
-    return textures[name];
+    return textures[name].get();
 }
