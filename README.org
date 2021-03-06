@@ -1,0 +1,36 @@
+#+TITLE: Break Out
+#+AUTHOR: Xiaoduan Chang
+
+This is an implementation of the classical arcade game Break Out using Open GL
+with additional features.
+
+The project is developed under the guide provided by Joey de Vries
+https://learnopengl.com/In-Practice/2D-Game/Breakout.
+
+* Compile
+
+  All the necessary resources are packed in the repository. To compile the
+  project, open the .sln file using Visual Studio 2019 or later version and
+  build the project. Before you run the program, you still have to place the
+  necessary dll files into the directory where the executable program is
+  located. All the necessary dll files are provided in
+  =($PROJECTDIR)resources/dll=. There is also a pre-compiled version you could
+  download and run on your computer directly
+  https://github.com/drcxd/BreakOut/releases/tag/v1.0.
+
+* Features
+
+  + Sprite-based rendering using Open GL
+  + Collision detection between AABBs and between AABB and Circle
+  + Particle effect highlighting the trail of the ball
+  + Postprocessing effects implemented with Open GL framebuffer
+  + Simple audio support and text rendering
+
+* Future Work
+
+  + Instead of using one texture per sprite, a texture atlas could be used to
+    combine sprites into one texture which reduce the cost of switching between
+    different textures
+  + Instanced rendering quads or sprites to reduce draw calls
+  + Using space partitioning algorithms to reduce unnecessary check for
+    collision
