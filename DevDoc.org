@@ -1,0 +1,171 @@
+#+TITLE: DevDoc
+#+AUTHOR: Chang Xiaoduan
+
+I decide to use xmake to build this project.
+
+First, I have to figure out the dependencies of the project. After
+inspecting the library directory, I find that the dependencies could
+be classified into the following categories:
+
+1. OpenGL related libraries: glfw, glad, glm
+2. Fonts related library: freetype
+3. Audio related library: irrKlang
+4. Other library: fmt
+
+It looks difficult to me to rebuild the whole program with all its
+dependencies all at once. Thus, I will follow the development path of
+the original program: I will build the graphics part of the program
+first and gradually add fonts and audio support.
+
+* Build the Graphics Part
+
+** Create the Window
+
+At the very beginning, I have to use xmake to build a working OpenGL
+program. This will be a whole new project and I will gradully add
+source files to it from the original project. With the support of
+xmake packages, this is quite simple.
+
+#+begin_src lua
+  add_rules("mode.debug", "mode.release")
+
+  add_requires("opengl", "glfw", "glad")
+
+  set_defaultmode("debug")
+
+  target("BreakOut_xmake") do
+     add_packages("opengl", "glfw", "glad")
+     set_kind("binary")
+     add_files("src/*.cpp")
+  end
+#+end_src
+
+This xmake configuration file plus the main file from the original
+BreakOut project should work. I still have to comment out anything
+related to game logic which are not built yet.
+
+#+begin_src shell
+  xmake
+  xmake run
+#+end_src
+
+The program compiled and the empty window is created, cool.
+
+** The Game Logic
+
+Now with the framework setup, I could start the real work: rebuild the
+game logic. This starts by uncommenting the game-logic-related code in
+the main file. It is good that the main file only depends on =Game=
+class, so I copy =Game.h= and =Game.cpp= to the new project.
+
+Inspecting =Game.cpp=, I found that it dpends on glm. Fortunately, xmake
+supports this package as well, so I have only to update my =xmake.lua=
+file to reflect this dependency.
+
+#+begin_src lua
+  add_rules("mode.debug", "mode.release")
+
+  add_requires("opengl", "glfw", "glad", "glm")
+
+  set_defaultmode("debug")
+
+  target("BreakOut_xmake") do
+     add_packages("opengl", "glfw", "glad", "glm")
+     set_kind("binary")
+     add_files("src/*.cpp")
+  end
+#+end_src
+
+I also comment out any dependencies not related to game logic or
+graphics, since I plan to rebuild them later.
+
+=Game= class depends on lots of other modules, almost all the other game
+logic modules. I guess I need the compiler to help me find out what is
+going wrong now. I will copy all other refereneced module into the new
+project and remove dependencies to audio, fonts and other
+libraries. Then I will compile the code and see if I can get pass.
+
+Lucky enough, I get the project passed the compiler. However, during
+the process, I found that the original project use fmt library to
+print debug and error messages to the console, thus I decide to add
+fmt library first. See section [[*Build fmt Library]].
+
+After rebuilding code referencing fmg library, I could compile and run
+the project. However, there are some error messages printed on the
+console, reporting that some shader files are missing. The original
+project is compiled using Visual Studio 2019. The relative location of
+the executable file and resources is different when building using
+xmake. How to solve this problem?
+
+*** Use Relative Path to Locate Resources
+
+The resource directory is hard-coded. I decided to find a way to
+locate it more flexibly. That is to first find the root directory of
+the project, which is defined as one of the executable's parent
+directory that contains a directory named =resources=. Then all the code
+requesting resources should use a path relative to the project root
+direcotry.
+
+Up to this point, all the game logics and graphics code are
+rebuilt. We can now work on the font library.
+
+* Build with Font Library
+
+xmake also support freetype library, so I'll try to add the dependency
+to it in xmake.lua to see if this suffices.
+
+#+begin_src lua
+  add_rules("mode.debug", "mode.release")
+
+  add_requires("opengl", "glfw", "glad", "glm", "fmt", "freetype")
+
+  set_defaultmode("debug")
+
+  target("BreakOut_xmake") do
+     add_packages("opengl", "glfw", "glad", "glm", "fmt", "freetype")
+     set_kind("binary")
+     add_files("src/*.cpp")
+     set_languages("c++17")
+  end
+#+end_src
+
+It turns out that xmake perfectly supports this library.
+
+* Build with fmt Library
+
+Again, xmake packages support fmt library, so what I need to do is to
+add dependency to fmt in xmake.lua.
+
+#+begin_src lua
+  add_rules("mode.debug", "mode.release")
+
+  add_requires("opengl", "glfw", "glad", "glm", "fmt")
+
+  set_defaultmode("debug")
+
+  target("BreakOut_xmake") do
+     add_packages("opengl", "glfw", "glad", "glm", "fmt")
+     set_kind("binary")
+     add_files("src/*.cpp")
+  end
+#+end_src
+
+Then I uncomment any code referencing the fmt library.
+
+* Build with Audio Library
+
+xmake does not support irrKlang directly now, though it supports
+irrlicht, I do not know the relationship of these two libraries. Thus,
+I have to build with the audio library by meself.
+
+What I need is its header files, static libraries and dynamic
+libraries. Since I want this project can be built on Linux and
+Windows, I need both .dll files and .so files.
+
+On Windows I manage to compile and run the program. However, I have to
+manually place the .dll files into the directory of the executable
+file.
+
+** TODO Build on Linux
+
+** TODO Package the Game
