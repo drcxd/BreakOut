@@ -17,7 +17,7 @@ target("BreakOut") do
       add_installfiles("./slib/*.dll", {prefixdir = "bin"})
    end
    if is_plat("linux") then
-      add_installfiles("./slib/*.so", , {prefixdir = "bin"})
+      add_installfiles("./slib/*.so", {prefixdir = "bin"})
    end
 end
 
