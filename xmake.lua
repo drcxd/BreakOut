@@ -12,6 +12,13 @@ target("BreakOut") do
    add_includedirs("./include/")
    add_linkdirs("./lib/")
    add_links("IrrKlang")
+   set_installdir(".")
+   if is_plat("windows") then
+      add_installfiles("./slib/*.dll", {prefixdir = "bin"})
+   end
+   if is_plat("linux") then
+      add_installfiles("./slib/*.so", , {prefixdir = "bin"})
+   end
 end
 
 --
