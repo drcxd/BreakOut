@@ -5,6 +5,8 @@
 
 #include <glad/glad.h>
 
+#include "Texture2D.h"
+
 class Shader;
 class Texture2D;
 

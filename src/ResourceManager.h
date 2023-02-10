@@ -5,6 +5,8 @@
 #include <string>
 #include <memory>
 
+#include "Texture2D.h"
+
 class Texture2D;
 class Shader;
 

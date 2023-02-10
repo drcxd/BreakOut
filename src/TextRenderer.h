@@ -9,6 +9,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "Texture2D.h"
+
 class Shader;
 class Texture2D;
 
