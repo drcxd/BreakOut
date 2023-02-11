@@ -20,16 +20,16 @@ commands in your shell:
   xmake i # install the executable, by default install to ./bin/
 #+end_src
 
-Then on Windows, users could execute =./bin/BreakOut= to run the
-program. On Linux, the shared libraries should be exposed to the
-system. This can be done by
+On Windows, users could execute =./bin/BreakOut= to run the program. On
+Linux, the shared libraries should be exposed to the system. This can
+be done by
 
 #+begin_src shell
-  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path_to_project_root/slib
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path_to_project_root/bin/
   export LD_LIBRARY_PATH
 #+end_src
 
-Then the program in =./bin/BreakOut= could be executed.
+Then the program =./bin/BreakOut= should work.
 
 There is also a pre-compiled version you could download and run on
 your computer directly
@@ -46,9 +46,9 @@ https://github.com/drcxd/BreakOut/releases/tag/v1.0.
 
 * Future Work
 
-+ Instead of using one texture per sprite, a texture atlas could be used to
-  combine sprites into one texture which reduce the cost of switching between
-  different textures
++ Instead of using one texture per sprite, a texture atlas could be
+  used to combine sprites into one texture which reduce the cost of
+  switching between different textures
 + Instanced rendering quads or sprites to reduce draw calls
 + Using space partitioning algorithms to reduce unnecessary check for
   collision
